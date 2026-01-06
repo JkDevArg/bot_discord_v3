@@ -61,23 +61,19 @@ class Points(commands.Cog):
                     # Calcular bonificación de puntos
                     bonus_points = rewards['points']
                     
-                    # Anunciar level-up con webhook
+                    # Anunciar level-up usando el cog
                     try:
-                        from bot.services.announcement_service import LevelAnnouncementService
+                        from bot.cogs.announcements import AnnouncementsCog
                         import asyncio
-                        
-                        # Obtener avatar del usuario
-                        avatar_url = message.author.display_avatar.url
                         
                         # Enviar anuncio
                         asyncio.create_task(
-                            LevelAnnouncementService.announce_level_up(
-                                user_id=message.author.id,
-                                username=message.author.display_name,
-                                avatar_url=avatar_url,
-                                old_level=old_level,
-                                new_level=new_level,
-                                bonus_points=bonus_points
+                            AnnouncementsCog.announce_level_up_exp(
+                                self.bot,
+                                message.guild,
+                                message.author,
+                                new_level,
+                                rewards
                             )
                         )
                     except Exception as e:

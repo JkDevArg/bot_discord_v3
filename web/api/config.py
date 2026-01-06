@@ -101,12 +101,12 @@ async def save_announcement_channel(
         if not config:
             config = ChannelConfig(
                 config_type='announcement_channel',
-                channel_ids=str(request.channel_id),
+                channel_ids=request.channel_id,
                 is_enabled=True
             )
             db.add(config)
         else:
-            config.channel_ids = str(request.channel_id)
+            config.channel_ids = request.channel_id
         
         db.commit()
         return {"message": "Canal de anuncios guardado", "channel_id": request.channel_id}
@@ -147,12 +147,12 @@ async def save_log_channel(
         if not config:
             config = ChannelConfig(
                 config_type='log_channel',
-                channel_ids=str(request.channel_id),
+                channel_ids=request.channel_id,
                 is_enabled=True
             )
             db.add(config)
         else:
-            config.channel_ids = str(request.channel_id)
+            config.channel_ids = request.channel_id
         
         db.commit()
         return {"message": "Canal de logs guardado", "channel_id": request.channel_id}

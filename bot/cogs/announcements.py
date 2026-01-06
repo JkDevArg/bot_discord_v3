@@ -19,13 +19,26 @@ class AnnouncementsCog(commands.Cog):
         """Obtener canal de anuncios configurado"""
         db = SessionLocal()
         try:
-            config = db.query(AnnouncementConfig).filter(
-                AnnouncementConfig.announcement_type == announcement_type,
-                AnnouncementConfig.is_enabled == True
+            from bot.database.channel_config import ChannelConfig
+            
+            # Mapear tipos de anuncio a config_type
+            config_type_map = {
+                'level_up': 'announcement_channel',
+                'purchase': 'announcement_channel',
+                'event': 'announcement_channel'
+            }
+            
+            config_type = config_type_map.get(announcement_type, 'announcement_channel')
+            
+            config = db.query(ChannelConfig).filter(
+                ChannelConfig.config_type == config_type,
+                ChannelConfig.is_enabled == True
             ).first()
             
-            if config:
-                channel = guild.get_channel(config.channel_id)
+            if config and config.channel_ids:
+                # channel_ids es un string con el ID del canal
+                channel_id = int(config.channel_ids)
+                channel = guild.get_channel(channel_id)
                 return channel
             
             return None
