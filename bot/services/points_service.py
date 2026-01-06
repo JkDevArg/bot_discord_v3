@@ -116,6 +116,30 @@ class PointsService:
         Returns:
             Tupla (éxito, puntos_otorgados, mensaje)
         """
+        # Verificar si el canal está en la lista de canales configurados
+        if channel_id is not None:
+            from bot.database.channel_config import ChannelConfig
+            import json
+            
+            config = db.query(ChannelConfig).filter(
+                ChannelConfig.config_type == 'points_channels',
+                ChannelConfig.is_enabled == True
+            ).first()
+            
+            if config and config.channel_ids:
+                try:
+                    allowed_channels = json.loads(config.channel_ids)
+                    # Convertir a strings para comparar
+                    allowed_channels_str = [str(ch) for ch in allowed_channels]
+                    if str(channel_id) not in allowed_channels_str:
+                        return False, 0, "Canal no configurado para puntos"
+                except:
+                    # Si hay error parseando, no otorgar puntos
+                    return False, 0, "Error en configuración de canales"
+            else:
+                # Si no hay canales configurados, no otorgar puntos
+                return False, 0, "No hay canales configurados"
+        
         # Verificar si puede ganar puntos
         can_earn, reason = PointsService.can_earn_points(db, user)
         if not can_earn:
