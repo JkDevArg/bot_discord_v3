@@ -460,8 +460,11 @@
         document.getElementById('itemId').value = '';
         document.getElementById('itemActive').checked = true;
         document.getElementById('itemStock').value = '-1';
-        document.getElementById('itemCategory').value = ""; // Reset
         document.getElementById('imagePreview').style.display = 'none';
+
+        // Render categories in the select
+        renderCategorySelect();
+        document.getElementById('itemCategory').value = ""; // Reset to "Sin Categoría"
 
         itemModal.show();
     }

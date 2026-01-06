@@ -29,7 +29,7 @@ class WebhookLogger:
             db = SessionLocal()
             try:
                 config = db.query(ChannelConfig).filter(
-                    ChannelConfig.config_type == 'webhook_url'
+                    ChannelConfig.config_type == 'announcement_webhook'
                 ).first()
                 
                 if not config or not config.channel_ids:
