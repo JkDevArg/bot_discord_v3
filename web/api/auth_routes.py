@@ -235,3 +235,13 @@ async def get_current_user_info(current_user: AdminUser = Depends(get_current_us
         "last_login": current_user.last_login.isoformat() if current_user.last_login else None,
         "created_at": current_user.created_at.isoformat()
     }
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    """
+    Cerrar sesión eliminando la cookie de autenticación
+    """
+    response.delete_cookie(key="access_token")
+    web_logger.info("Logout exitoso")
+    return {"message": "Sesión cerrada correctamente"}
