@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}Roles - Discord Bot Admin{% endblock %}
+
+{% block content %}
+<h2 class="text-white mb-4"><i class="bi bi-award"></i> Gestión de Roles</h2>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list"></i> Roles Configurados</span>
+        <button class="btn btn-primary btn-sm" onclick="showCreateModal()">
+            <i class="bi bi-plus-circle"></i> Nuevo Rol
+        </button>
+    </div>
+    <div class="card-body">
+        <div id="rolesTable">
+            <p class="text-muted">Cargando roles...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Rol -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalTitle">Nuevo Rol</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="botUnavailableWarning" class="alert alert-warning" style="display: none;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Bot no disponible.</strong> Puedes crear el rol manualmente ingresando el ID del rol de
+                    Discord.
+                </div>
+
+                <form id="roleForm">
+                    <input type="hidden" id="roleId">
+
+                    <div class="mb-3" id="discordRoleSelectDiv">
+                        <label for="discordRoleSelect" class="form-label">Rol de Discord</label>
+                        <select class="form-select" id="discordRoleSelect">
+                            <option value="">Cargando roles...</option>
+                        </select>
+                        <small class="text-muted">Selecciona un rol existente en Discord</small>
+                    </div>
+
+                    <div class="mb-3" id="manualRoleDiv" style="display: none;">
+                        <label for="manualRoleId" class="form-label">ID del Rol de Discord</label>
+                        <input type="text" class="form-control" id="manualRoleId" placeholder="Ej: 1234567890123456789">
+                        <small class="text-muted">Clic derecho en el rol → Copiar ID (requiere modo
+                            desarrollador)</small>
+                    </div>
+
+                    <div class="mb-3" id="manualRoleNameDiv" style="display: none;">
+                        <label for="manualRoleName" class="form-label">Nombre del Rol</label>
+                        <input type="text" class="form-control" id="manualRoleName" placeholder="Ej: VIP">
+                        <small class="text-muted">Nombre del rol tal como aparece en Discord</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="pointsRequired" class="form-label">Puntos Requeridos</label>
+                        <input type="number" class="form-control" id="pointsRequired" min="0" required>
+                        <small class="text-muted">Puntos necesarios para obtener este rol</small>
+                    </div>
+
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoAssign" checked>
+                        <label class="form-check-label" for="autoAssign">
+                            Asignación Automática
+                        </label>
+                        <small class="text-muted d-block">Asignar automáticamente cuando el usuario alcance los
+                            puntos</small>
+                    </div>
+
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="isActive" checked>
+                        <label class="form-check-label" for="isActive">
+                            Activo
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveRole()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let discordRoles = [];
+    let configuredRoles = [];
+    let roleModal;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        roleModal = new bootstrap.Modal(document.getElementById('roleModal'));
+        loadRoles();
+    });
+
+    async function loadRoles() {
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await fetch('/api/roles', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error cargando roles');
+
+            configuredRoles = await response.json();
+            renderRolesTable();
+        } catch (error) {
+            document.getElementById('rolesTable').innerHTML =
+                `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        }
+    }
+
+    function renderRolesTable() {
+        const container = document.getElementById('rolesTable');
+
+        if (configuredRoles.length === 0) {
+            container.innerHTML = '<p class="text-muted">No hay roles configurados. Crea uno nuevo para empezar.</p>';
+            return;
+        }
+
+        let html = `
+        <div class="table-responsive">
+            <table class="table table-dark table-hover">
+                <thead>
+                    <tr>
+                        <th>Rol</th>
+                        <th>Puntos Requeridos</th>
+                        <th>Auto-Asignar</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+        configuredRoles.forEach(role => {
+            const colorStyle = role.color ? `style="color: ${role.color}"` : '';
+            html += `
+            <tr>
+                <td ${colorStyle}>
+                    <i class="bi bi-circle-fill me-2" ${colorStyle}></i>
+                    <strong>${role.name}</strong>
+                </td>
+                <td>${role.points_required.toLocaleString()} pts</td>
+                <td>
+                    ${role.auto_assign ?
+                    '<span class="badge bg-success">Sí</span>' :
+                    '<span class="badge bg-secondary">No</span>'}
+                </td>
+                <td>
+                    ${role.is_active ?
+                    '<span class="badge bg-success">Activo</span>' :
+                    '<span class="badge bg-danger">Inactivo</span>'}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="editRole(${role.id})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteRole(${role.id}, '${role.name}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+
+    async function loadDiscordRoles() {
+        const token = localStorage.getItem('token');
+        const select = document.getElementById('discordRoleSelect');
+        const warning = document.getElementById('botUnavailableWarning');
+        const selectDiv = document.getElementById('discordRoleSelectDiv');
+        const manualIdDiv = document.getElementById('manualRoleDiv');
+        const manualNameDiv = document.getElementById('manualRoleNameDiv');
+
+        try {
+            const response = await fetch('/api/roles/discord', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                // Bot no disponible - mostrar campos manuales
+                warning.style.display = 'block';
+                selectDiv.style.display = 'none';
+                manualIdDiv.style.display = 'block';
+                manualNameDiv.style.display = 'block';
+                return;
+            }
+
+            discordRoles = await response.json();
+
+            warning.style.display = 'none';
+            selectDiv.style.display = 'block';
+            manualIdDiv.style.display = 'none';
+            manualNameDiv.style.display = 'none';
+
+            select.innerHTML = '<option value="">Selecciona un rol...</option>';
+            discordRoles.forEach(role => {
+                select.innerHTML += `
+                <option value="${role.id}" data-name="${role.name}" data-color="${role.color}">
+                    ${role.name}
+                </option>
+            `;
+            });
+        } catch (error) {
+            warning.style.display = 'block';
+            selectDiv.style.display = 'none';
+            manualIdDiv.style.display = 'block';
+            manualNameDiv.style.display = 'block';
+        }
+    }
+
+    function showCreateModal() {
+        document.getElementById('roleModalTitle').textContent = 'Nuevo Rol';
+        document.getElementById('roleForm').reset();
+        document.getElementById('roleId').value = '';
+        document.getElementById('autoAssign').checked = true;
+        document.getElementById('isActive').checked = true;
+
+        loadDiscordRoles();
+        roleModal.show();
+    }
+
+    function editRole(roleId) {
+        const role = configuredRoles.find(r => r.id === roleId);
+        if (!role) return;
+
+        document.getElementById('roleModalTitle').textContent = 'Editar Rol';
+        document.getElementById('roleId').value = role.id;
+        document.getElementById('pointsRequired').value = role.points_required;
+        document.getElementById('autoAssign').checked = role.auto_assign;
+        document.getElementById('isActive').checked = role.is_active;
+
+        // No permitir cambiar el rol de Discord al editar
+        document.getElementById('discordRoleSelectDiv').style.display = 'none';
+        document.getElementById('manualRoleDiv').style.display = 'none';
+        document.getElementById('manualRoleNameDiv').style.display = 'none';
+
+        roleModal.show();
+    }
+
+    async function saveRole() {
+        const token = localStorage.getItem('token');
+        const roleId = document.getElementById('roleId').value;
+        const pointsRequired = parseInt(document.getElementById('pointsRequired').value);
+        const autoAssign = document.getElementById('autoAssign').checked;
+        const isActive = document.getElementById('isActive').checked;
+
+        let discordRoleId, roleName;
+
+        // Determinar si estamos usando selector o entrada manual
+        const selectDiv = document.getElementById('discordRoleSelectDiv');
+        if (selectDiv.style.display !== 'none') {
+            // Modo selector
+            discordRoleId = document.getElementById('discordRoleSelect').value;
+            if (!discordRoleId) {
+                alert('Por favor selecciona un rol de Discord');
+                return;
+            }
+            const selectedOption = document.querySelector(`#discordRoleSelect option[value="${discordRoleId}"]`);
+            roleName = selectedOption.dataset.name;
+        } else {
+            // Modo manual
+            const manualId = document.getElementById('manualRoleId').value;
+            const manualName = document.getElementById('manualRoleName').value;
+
+            if (!manualId || !manualName) {
+                alert('Por favor ingresa el ID y nombre del rol');
+                return;
+            }
+
+            discordRoleId = manualId;
+            roleName = manualName;
+        }
+
+        const data = roleId ? {
+            points_required: pointsRequired,
+            auto_assign: autoAssign,
+            is_active: isActive
+        } : {
+            discord_role_id: parseInt(discordRoleId),
+            name: roleName,
+            points_required: pointsRequired,
+            auto_assign: autoAssign,
+            is_active: isActive
+        };
+
+        try {
+            const url = roleId ? `/api/roles/${roleId}` : '/api/roles';
+            const method = roleId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error guardando rol');
+            }
+
+            roleModal.hide();
+            loadRoles();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async function deleteRole(roleId, roleName) {
+        if (!confirm(`¿Estás seguro de eliminar el rol "${roleName}"?\n\nEsto solo eliminará la configuración, no el rol de Discord.`)) {
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await fetch(`/api/roles/${roleId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error eliminando rol');
+
+            loadRoles();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+</script>
+
+<style>
+    .table-dark {
+        background-color: #2C2F33;
+    }
+
+    .table-dark th {
+        border-color: #40444B;
+    }
+
+    .table-dark td {
+        border-color: #40444B;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #36393F;
+    }
+
+    .modal-content {
+        border: 1px solid #40444B;
+    }
+
+    .form-control,
+    .form-select {
+        background-color: #40444B;
+        border-color: #40444B;
+        color: white;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background-color: #40444B;
+        border-color: #5865F2;
+        color: white;
+    }
+
+    .form-check-input {
+        background-color: #40444B;
+        border-color: #40444B;
+    }
+
+    .form-check-input:checked {
+        background-color: #5865F2;
+        border-color: #5865F2;
+    }
+</style>
+{% endblock %}

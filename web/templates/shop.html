@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+
+{% block title %}Tienda - Discord Bot Admin{% endblock %}
+
+{% block content %}
+<h2 class="text-white mb-4"><i class="bi bi-shop"></i> Gestión de Tienda</h2>
+
+<!-- Shop Stats Dashboard -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-dark text-white h-100 border-primary">
+            <div class="card-body text-center">
+                <h6 class="text-muted text-uppercase mb-2">Total Compras</h6>
+                <h3 class="display-6 fw-bold text-white" id="statPurchases">0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-dark text-white h-100 border-warning">
+            <div class="card-body text-center">
+                <h6 class="text-muted text-uppercase mb-2">Puntos Gastados</h6>
+                <h3 class="display-6 fw-bold text-warning" id="statSpent">0</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-dark text-white h-100 border-info">
+            <div class="card-body text-center">
+                <h6 class="text-muted text-uppercase mb-2">Item Más Popular</h6>
+                <h5 class="fw-bold text-info mt-2" id="statPopular">N/A</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-bag"></i> Items de la Tienda</span>
+        <div>
+            <button class="btn btn-dark-glow btn-sm me-2" onclick="showHistoryModal()">
+                <i class="bi bi-clock-history"></i> Historial
+            </button>
+            <button class="btn btn-dark-glow btn-sm me-2" onclick="showCategoryModal()">
+                <i class="bi bi-tags"></i> Categorías
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="showCreateModal()">
+                <i class="bi bi-plus-circle"></i> Nuevo Item
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="itemsGrid" class="row">
+            <p class="text-muted">Cargando items...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Categorías -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title">Gestión de Categorías</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newCategoryName" placeholder="Nueva Categoría"
+                            required>
+                        <button class="btn btn-primary" type="button" onclick="saveCategory()">
+                            <i class="bi bi-plus-lg"></i> Crear
+                        </button>
+                    </div>
+                </form>
+                <div class="list-group list-group-flush" id="categoryList">
+                    <!-- Dynamic List -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Historial -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-clock-history"></i> Historial de Compras</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Item</th>
+                                <th>Precio</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Item -->
+<div class="modal fade" id="itemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="itemModalTitle">Nuevo Item</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="itemForm">
+                    <input type="hidden" id="itemId">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="itemName" class="form-label">Nombre del Item</label>
+                                <input type="text" class="form-control" id="itemName" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="itemPrice" class="form-label">Precio (puntos)</label>
+                                <input type="number" class="form-control" id="itemPrice" min="1" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="itemCategory" class="form-label">Categoría</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary text-white"><i
+                                            class="bi bi-tag"></i></span>
+                                    <select class="form-select" id="itemCategory">
+                                        <option value="">Sin Categoría</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="itemType" class="form-label">Tipo de Acción</label>
+                                <select class="form-select" id="itemType">
+                                    <option value="custom">Personalizado</option>
+                                    <option value="role">Rol de Discord</option>
+                                    <option value="benefit">Beneficio</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="itemStock" class="form-label">Stock</label>
+                                <input type="number" class="form-control" id="itemStock" value="-1">
+                                <small class="text-muted">-1 = Ilimitado</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="itemImage" class="form-label">Imagen</label>
+                                <input type="file" class="form-control" id="itemImage" accept="image/*">
+                                <small class="text-muted">O ingresa URL:</small>
+                                <input type="text" class="form-control mt-2" id="itemImageUrl"
+                                    placeholder="https://...">
+                            </div>
+
+                            <div class="mb-3">
+                                <div id="imagePreview" style="display: none;">
+                                    <img id="previewImg" src="" alt="Preview" class="img-fluid rounded"
+                                        style="max-height: 200px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="itemDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="itemDescription" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="itemActive" checked>
+                        <label class="form-check-label" for="itemActive">Activo</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveItem()">
+                    <span id="saveButtonText">Guardar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let items = [];
+    let categories = [];
+    let currentFilter = 'all';
+    let itemModal;
+    let historyModal;
+    let categoryModal;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        itemModal = new bootstrap.Modal(document.getElementById('itemModal'));
+        historyModal = new bootstrap.Modal(document.getElementById('historyModal'));
+        categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+
+        loadCategories(); // Load categories first
+        loadItems();
+        loadStats();
+
+        // Preview de imagen
+        document.getElementById('itemImage').addEventListener('change', previewImage);
+        document.getElementById('itemImageUrl').addEventListener('input', function () {
+            const url = this.value;
+            if (url) {
+                document.getElementById('previewImg').src = url;
+                document.getElementById('imagePreview').style.display = 'block';
+            }
+        });
+    });
+
+    async function loadCategories() {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/shop/categories', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                categories = await response.json();
+                renderCategoryFilters();
+                renderCategorySelect();
+                renderCategoryList();
+            }
+        } catch (e) { console.error("Error loading categories", e); }
+    }
+
+    function renderCategoryFilters() {
+        const container = document.getElementById('categoryFilters');
+        let html = `<li class="nav-item">
+                <a class="nav-link ${currentFilter === 'all' ? 'active' : ''}" href="#" onclick="filterItems('all', this)">Todo</a>
+            </li>`;
+
+        categories.forEach(cat => {
+            const active = currentFilter === cat.id ? 'active' : '';
+            html += `<li class="nav-item">
+                <a class="nav-link ${active}" href="#" onclick="filterItems(${cat.id}, this)">${cat.name}</a>
+            </li>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function renderCategorySelect() {
+        const select = document.getElementById('itemCategory');
+        let html = '<option value="">Sin Categoría</option>';
+        categories.forEach(cat => {
+            html += `<option value="${cat.id}">${cat.name}</option>`;
+        });
+        select.innerHTML = html;
+    }
+
+    function renderCategoryList() {
+        const container = document.getElementById('categoryList');
+        let html = '';
+        categories.forEach(cat => {
+            html += `<div class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
+                <span>${cat.name}</span>
+                <span class="badge bg-secondary">${cat.items ? cat.items.length : 0} items</span>
+            </div>`;
+        });
+        container.innerHTML = html || '<p class="text-muted text-center p-3">No hay categorías</p>';
+    }
+
+    function showCategoryModal() {
+        renderCategoryList();
+        categoryModal.show();
+    }
+
+    async function saveCategory() {
+        const name = document.getElementById('newCategoryName').value;
+        if (!name) return;
+
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/shop/categories', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name })
+            });
+
+            if (response.ok) {
+                document.getElementById('newCategoryName').value = '';
+                loadCategories(); // Reload all
+            } else {
+                alert("Error al crear categoría");
+            }
+        } catch (e) { alert("Error: " + e.message); }
+    }
+
+    function filterItems(categoryId, element) {
+        currentFilter = categoryId;
+        renderCategoryFilters(); // Re-render to update active class
+        renderItemsGrid();
+
+        // Prevent default anchor behavior
+        if (element) event.preventDefault();
+    }
+
+    async function loadStats() {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/shop/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return;
+            const stats = await response.json();
+
+            document.getElementById('statPurchases').textContent = stats.total_purchases;
+            document.getElementById('statSpent').textContent = stats.total_spent.toLocaleString();
+            document.getElementById('statPopular').textContent = stats.popular_item || 'N/A';
+        } catch (e) {
+            console.error("Error loading stats", e);
+        }
+    }
+
+    function showHistoryModal() {
+        historyModal.show();
+        loadHistory();
+    }
+
+    async function loadHistory() {
+        const token = localStorage.getItem('token');
+        const tbody = document.getElementById('historyTableBody');
+
+        try {
+            const response = await fetch('/api/shop/history', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error');
+            const history = await response.json();
+
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay compras registradas</td></tr>';
+                return;
+            }
+
+            let html = '';
+            history.forEach(h => {
+                const date = new Date(h.date).toLocaleString();
+                html += `
+                    <tr>
+                        <td><span class="text-info">${h.user_name}</span></td>
+                        <td>${h.item_name}</td>
+                        <td class="text-warning text-end">${h.price.toLocaleString()}</td>
+                        <td class="small text-muted">${date}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error cargando historial</td></tr>';
+        }
+    }
+
+    async function loadItems() {
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await fetch('/api/shop/items', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error cargando items');
+
+            items = await response.json();
+            renderItemsGrid();
+        } catch (error) {
+            document.getElementById('itemsGrid').innerHTML =
+                `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        }
+    }
+
+    function renderItemsGrid() {
+        const container = document.getElementById('itemsGrid');
+
+        // Filter items
+        let visibleItems = items;
+        if (currentFilter !== 'all') {
+            visibleItems = items.filter(i => i.category_id === currentFilter);
+        }
+
+        if (visibleItems.length === 0) {
+            container.innerHTML = '<p class="text-muted col-12 text-center p-5">No hay items en esta vista.</p>';
+            return;
+        }
+
+        let html = '';
+        visibleItems.forEach(item => {
+            const imageUrl = item.image_url || 'https://via.placeholder.com/300x200?text=Sin+Imagen';
+            const stockText = item.stock === -1 ? 'Ilimitado' : item.stock;
+            const statusBadge = item.is_active ?
+                '<span class="badge bg-success">Activo</span>' :
+                '<span class="badge bg-danger">Inactivo</span>';
+
+            html += `
+            <div class="col-md-4 mb-3">
+                <div class="card bg-dark text-white h-100">
+                    <img src="${imageUrl}" class="card-img-top" alt="${item.name}" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title">${item.name}</h5>
+                        <p class="card-text text-muted small card-text-clamp" title="${item.description || ''}">${item.description || 'Sin descripción'}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 mb-0 text-warning">${item.price.toLocaleString()} pts</span>
+                            ${statusBadge}
+                        </div>
+                        <small class="text-muted">Stock: ${stockText}</small>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <button class="btn btn-sm btn-warning" onclick="editItem(${item.id})">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteItem(${item.id}, '${item.name}')">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function showCreateModal() {
+        document.getElementById('itemModalTitle').textContent = 'Nuevo Item';
+        document.getElementById('itemForm').reset();
+        document.getElementById('itemId').value = '';
+        document.getElementById('itemActive').checked = true;
+        document.getElementById('itemStock').value = '-1';
+        document.getElementById('itemCategory').value = ""; // Reset
+        document.getElementById('imagePreview').style.display = 'none';
+
+        itemModal.show();
+    }
+
+    function editItem(itemId) {
+        const item = items.find(i => i.id === itemId);
+        if (!item) return;
+
+        document.getElementById('itemModalTitle').textContent = 'Editar Item';
+        document.getElementById('itemId').value = item.id;
+        document.getElementById('itemName').value = item.name;
+        document.getElementById('itemDescription').value = item.description || '';
+        document.getElementById('itemPrice').value = item.price;
+        document.getElementById('itemType').value = item.item_type;
+        document.getElementById('itemStock').value = item.stock;
+        document.getElementById('itemActive').checked = item.is_active;
+        document.getElementById('itemImageUrl').value = item.image_url || '';
+
+        // Set Category
+        document.getElementById('itemCategory').value = item.category_id || "";
+
+        if (item.image_url) {
+            document.getElementById('previewImg').src = item.image_url;
+            document.getElementById('imagePreview').style.display = 'block';
+        }
+
+        itemModal.show();
+    }
+
+    async function saveItem() {
+        const token = localStorage.getItem('token');
+        const itemId = document.getElementById('itemId').value;
+        const saveButton = document.getElementById('saveButtonText');
+
+        saveButton.textContent = 'Guardando...';
+
+        try {
+            let imageUrl = document.getElementById('itemImageUrl').value;
+
+            // Subir imagen si se seleccionó un archivo
+            const imageFile = document.getElementById('itemImage').files[0];
+            if (imageFile) {
+                const formData = new FormData();
+                formData.append('file', imageFile);
+
+                const uploadResponse = await fetch('/api/shop/upload-image', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                if (uploadResponse.ok) {
+                    const uploadData = await uploadResponse.json();
+                    imageUrl = uploadData.image_url;
+                }
+            }
+
+            const data = {
+                name: document.getElementById('itemName').value,
+                description: document.getElementById('itemDescription').value,
+                image_url: imageUrl,
+                price: parseInt(document.getElementById('itemPrice').value),
+                item_type: document.getElementById('itemType').value,
+                stock: parseInt(document.getElementById('itemStock').value),
+                is_active: document.getElementById('itemActive').checked,
+                category_id: document.getElementById('itemCategory').value ? parseInt(document.getElementById('itemCategory').value) : null
+            };
+
+            const url = itemId ? `/api/shop/items/${itemId}` : '/api/shop/items';
+            const method = itemId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error guardando item');
+            }
+
+            itemModal.hide();
+            loadItems();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            saveButton.textContent = 'Guardar';
+        }
+    }
+
+    async function deleteItem(itemId, itemName) {
+        if (!confirm(`¿Estás seguro de eliminar "${itemName}"?`)) {
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+
+        try {
+            const response = await fetch(`/api/shop/items/${itemId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error eliminando item');
+
+            loadItems();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+</script>
+
+<style>
+    .card {
+        transition: transform 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-img-top {
+        border-bottom: 1px solid #40444B;
+    }
+</style>
+{% endblock %}

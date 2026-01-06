@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración - Discord Bot Admin{% endblock %}
+
+{% block content %}
+<h2 class="text-white mb-4"><i class="bi bi-gear"></i> Configuración</h2>
+
+<!-- Configuración de Canales -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-hash"></i> Configuración de Canales
+            </div>
+            <div class="card-body">
+                <!-- Canales donde se ganan puntos -->
+                <div class="mb-4">
+                    <h5 class="text-white">Canales de Puntos</h5>
+                    <p class="text-muted">Selecciona los canales donde los usuarios pueden ganar puntos por mensajes</p>
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="pointsChannelInput"
+                            placeholder="ID del canal (ej: 123456789)">
+                        <button class="btn btn-success" onclick="addPointsChannel()">
+                            <i class="bi bi-plus"></i> Agregar
+                        </button>
+                    </div>
+                    <div id="pointsChannelsList" class="mt-2">
+                        <!-- Canales se cargarán aquí -->
+                    </div>
+                </div>
+
+                <hr class="bg-secondary">
+
+                <!-- Canal de anuncios de level-up -->
+                <div class="mb-4">
+                    <h5 class="text-white">Canal de Anuncios (Level-Up)</h5>
+                    <p class="text-muted">Canal donde se anunciarán los level-ups y compras</p>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="levelUpChannelInput" placeholder="ID del canal">
+                        <button class="btn btn-primary" onclick="saveLevelUpChannel()">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                    </div>
+                    <small class="text-muted">Canal actual: <span id="currentLevelUpChannel">No
+                            configurado</span></small>
+                </div>
+
+                <hr class="bg-secondary">
+
+                <!-- Canal de logs -->
+                <div class="mb-4">
+                    <h5 class="text-white">Canal de Logs (Debug)</h5>
+                    <p class="text-muted">Canal donde se enviarán todos los logs y eventos del bot</p>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="logChannelInput" placeholder="ID del canal">
+                        <button class="btn btn-primary" onclick="saveLogChannel()">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                    </div>
+                    <small class="text-muted">Canal actual: <span id="currentLogChannel">No configurado</span></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuración de MFA -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-shield-lock"></i> Autenticación de Dos Factores (MFA)
+            </div>
+            <div class="card-body">
+                <div id="mfaStatus">
+                    <p class="text-muted">Cargando estado de MFA...</p>
+                </div>
+                <button class="btn btn-success" id="setupMfaBtn" onclick="setupMFA()" style="display:none;">
+                    <i class="bi bi-qr-code"></i> Configurar MFA
+                </button>
+                <button class="btn btn-danger" id="disableMfaBtn" onclick="disableMFA()" style="display:none;">
+                    <i class="bi bi-x-circle"></i> Desactivar MFA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-key"></i> Cambiar Contraseña
+            </div>
+            <div class="card-body">
+                <form id="changePasswordForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white">Contraseña Actual</label>
+                        <input type="password" class="form-control" id="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Confirmar Contraseña</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Cambiar Contraseña
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para MFA Setup -->
+<div class="modal fade" id="mfaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">Configurar MFA</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="mfaQRCode" class="text-center mb-3">
+                    <!-- QR Code se mostrará aquí -->
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white">Código de Verificación</label>
+                    <input type="text" class="form-control" id="mfaVerifyCode" placeholder="000000" maxlength="6">
+                </div>
+                <div id="recoveryCodes" style="display:none;">
+                    <h6 class="text-warning">Códigos de Recuperación</h6>
+                    <p class="text-muted small">Guarda estos códigos en un lugar seguro:</p>
+                    <div id="recoveryCodesList" class="bg-darker p-2 rounded">
+                        <!-- Códigos se mostrarán aquí -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="verifyAndEnableMFA()">
+                    Verificar y Activar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const token = localStorage.getItem('token');
+    let pointsChannels = [];
+
+    // Cargar configuración al inicio
+    async function loadConfig() {
+        await loadMFAStatus();
+        await loadChannelConfig();
+    }
+
+    // Cargar estado de MFA
+    async function loadMFAStatus() {
+        try {
+            const response = await fetch('/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            if (data.mfa_enabled) {
+                document.getElementById('mfaStatus').innerHTML =
+                    '<p class="text-success"><i class="bi bi-check-circle"></i> MFA Activado</p>';
+                document.getElementById('disableMfaBtn').style.display = 'block';
+            } else {
+                document.getElementById('mfaStatus').innerHTML =
+                    '<p class="text-warning"><i class="bi bi-exclamation-triangle"></i> MFA Desactivado</p>';
+                document.getElementById('setupMfaBtn').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Cargar configuración de canales
+    async function loadChannelConfig() {
+        try {
+            // Cargar canales de puntos
+            const pointsResponse = await fetch('/api/config/channels/points', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (pointsResponse.ok) {
+                const data = await pointsResponse.json();
+                pointsChannels = data.channel_ids.map(String);
+                renderPointsChannels();
+            }
+
+            // Cargar canal de anuncios
+            const announcementResponse = await fetch('/api/config/channels/announcements', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (announcementResponse.ok) {
+                const data = await announcementResponse.json();
+                if (data.channel_id) {
+                    document.getElementById('levelUpChannelInput').value = data.channel_id;
+                    document.getElementById('currentLevelUpChannel').textContent = `#${data.channel_id}`;
+                }
+            }
+
+            // Cargar canal de logs
+            const logsResponse = await fetch('/api/config/channels/logs', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (logsResponse.ok) {
+                const data = await logsResponse.json();
+                if (data.channel_id) {
+                    document.getElementById('logChannelInput').value = data.channel_id;
+                    document.getElementById('currentLogChannel').textContent = `#${data.channel_id}`;
+                }
+            }
+        } catch (error) {
+            console.error('Error cargando configuración:', error);
+        }
+    }
+
+    // Agregar canal de puntos
+    function addPointsChannel() {
+        const input = document.getElementById('pointsChannelInput');
+        const channelId = input.value.trim();
+
+        if (!channelId) {
+            alert('Ingresa un ID de canal válido');
+            return;
+        }
+
+        if (pointsChannels.includes(channelId)) {
+            alert('Este canal ya está en la lista');
+            return;
+        }
+
+        pointsChannels.push(channelId);
+        input.value = '';
+        renderPointsChannels();
+        savePointsChannels();
+    }
+
+    // Renderizar lista de canales de puntos
+    function renderPointsChannels() {
+        const list = document.getElementById('pointsChannelsList');
+
+        if (pointsChannels.length === 0) {
+            list.innerHTML = '<p class="text-muted">No hay canales configurados</p>';
+            return;
+        }
+
+        list.innerHTML = pointsChannels.map(id => `
+            <div class="badge bg-primary me-2 mb-2">
+                #${id}
+                <i class="bi bi-x-circle ms-1" onclick="removePointsChannel('${id}')" 
+                   style="cursor:pointer;"></i>
+            </div>
+        `).join('');
+    }
+
+    // Remover canal de puntos
+    function removePointsChannel(channelId) {
+        pointsChannels = pointsChannels.filter(id => id !== channelId);
+        renderPointsChannels();
+        savePointsChannels();
+    }
+
+    // Guardar canales de puntos
+    async function savePointsChannels() {
+        try {
+            const response = await fetch('/api/config/channels/points', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    channel_ids: pointsChannels.map(Number)
+                })
+            });
+
+            if (response.ok) {
+                console.log('Canales de puntos guardados');
+            } else {
+                alert('Error guardando canales de puntos');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error de conexión');
+        }
+    }
+
+    // Guardar canal de level-up
+    async function saveLevelUpChannel() {
+        const channelId = document.getElementById('levelUpChannelInput').value.trim();
+        if (!channelId) {
+            alert('Ingresa un ID de canal válido');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/config/channels/announcements', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    channel_id: parseInt(channelId)
+                })
+            });
+
+            if (response.ok) {
+                document.getElementById('currentLevelUpChannel').textContent = `#${channelId}`;
+                alert('Canal de anuncios guardado correctamente');
+            } else {
+                alert('Error guardando canal de anuncios');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error de conexión');
+        }
+    }
+
+    // Guardar canal de logs
+    async function saveLogChannel() {
+        const channelId = document.getElementById('logChannelInput').value.trim();
+        if (!channelId) {
+            alert('Ingresa un ID de canal válido');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/config/channels/logs', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    channel_id: parseInt(channelId)
+                })
+            });
+
+            if (response.ok) {
+                document.getElementById('currentLogChannel').textContent = `#${channelId}`;
+                alert('Canal de logs guardado correctamente');
+            } else {
+                alert('Error guardando canal de logs');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error de conexión');
+        }
+    }
+
+    // Setup MFA
+    async function setupMFA() {
+        try {
+            const response = await fetch('/api/auth/mfa/setup', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+
+            document.getElementById('mfaQRCode').innerHTML =
+                `<img src="${data.qr_code}" alt="QR Code" style="max-width: 200px;">`;
+
+            new bootstrap.Modal(document.getElementById('mfaModal')).show();
+        } catch (error) {
+            alert('Error configurando MFA');
+        }
+    }
+
+    // Verificar y activar MFA
+    async function verifyAndEnableMFA() {
+        const code = document.getElementById('mfaVerifyCode').value;
+
+        try {
+            const response = await fetch('/api/auth/mfa/enable', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: code })
+            });
+
+            if (response.ok) {
+                alert('MFA activado exitosamente');
+                location.reload();
+            } else {
+                alert('Código inválido');
+            }
+        } catch (error) {
+            alert('Error activando MFA');
+        }
+    }
+
+    // Desactivar MFA
+    async function disableMFA() {
+        if (!confirm('¿Estás seguro de desactivar MFA?')) return;
+
+        try {
+            const response = await fetch('/api/auth/mfa/disable', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                alert('MFA desactivado');
+                location.reload();
+            }
+        } catch (error) {
+            alert('Error desactivando MFA');
+        }
+    }
+
+    // Cargar configuración al inicio
+    loadConfig();
+</script>
+{% endblock %}

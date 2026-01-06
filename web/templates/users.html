@@ -1,0 +1,630 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios - Discord Bot Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-white"><i class="bi bi-people"></i> Gestión de Usuarios</h2>
+    <div class="input-group" style="max-width: 300px;">
+        <input type="text" class="form-control" id="searchInput" placeholder="Buscar usuario...">
+        <button class="btn btn-primary" onclick="searchUsers()">
+            <i class="bi bi-search"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-people fs-1 text-primary"></i>
+                <h3 class="mt-2 text-white" id="totalUsers">-</h3>
+                <p class="text-muted mb-0">Total Usuarios</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-coin fs-1 text-warning"></i>
+                <h3 class="mt-2 text-white" id="totalPoints">-</h3>
+                <p class="text-muted mb-0">Puntos Totales</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-star fs-1 text-info"></i>
+                <h3 class="mt-2 text-white" id="avgLevel">-</h3>
+                <p class="text-muted mb-0">Nivel Promedio</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de usuarios -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list"></i> Lista de Usuarios
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-dark table-striped">
+                <thead>
+                    <tr>
+                        <th>ID Discord</th>
+                        <th>Usuario</th>
+                        <th>Puntos</th>
+                        <th>Nivel</th>
+                        <th>EXP</th>
+                        <th>Mensajes</th>
+                        <th>Última Actividad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr>
+                        <td colspan="9" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <nav>
+            <ul class="pagination justify-content-center" id="pagination">
+                <!-- Paginación se generará aquí -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Modal para editar puntos -->
+<div class="modal fade" id="editPointsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">Editar Puntos</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-white">Usuario: <strong id="editPointsUsername"></strong></p>
+                <p class="text-muted">Puntos actuales: <strong id="editPointsCurrent"></strong></p>
+                <div class="mb-3">
+                    <label class="form-label text-white">Nuevos Puntos</label>
+                    <input type="number" class="form-control" id="editPointsInput" min="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="savePoints()">
+                    <i class="bi bi-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar nivel -->
+<div class="modal fade" id="editLevelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">Editar Nivel</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-white">Usuario: <strong id="editLevelUsername"></strong></p>
+                <p class="text-muted">Nivel actual: <strong id="editLevelCurrent"></strong></p>
+                <div class="mb-3">
+                    <label class="form-label text-white">Nuevo Nivel</label>
+                    <input type="number" class="form-control" id="editLevelInput" min="1" max="100">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveLevel()">
+                    <i class="bi bi-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para expulsar -->
+<div class="modal fade" id="kickModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">🚪 Expulsar Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-white">Usuario: <strong id="kickUsername"></strong></p>
+                <div class="mb-3">
+                    <label class="form-label text-white">Razón</label>
+                    <textarea class="form-control" id="kickReason" rows="3" required></textarea>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> El usuario será expulsado del servidor
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="confirmKick()">
+                    <i class="bi bi-door-open"></i> Expulsar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para banear -->
+<div class="modal fade" id="banModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">🔨 Banear Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-white">Usuario: <strong id="banUsername"></strong></p>
+                <div class="mb-3">
+                    <label class="form-label text-white">Razón</label>
+                    <textarea class="form-control" id="banReason" rows="3" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white">Eliminar mensajes de los últimos</label>
+                    <select class="form-control" id="banDeleteDays">
+                        <option value="0">No eliminar</option>
+                        <option value="1">1 día</option>
+                        <option value="3">3 días</option>
+                        <option value="7">7 días</option>
+                    </select>
+                </div>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>ADVERTENCIA:</strong> El usuario será baneado
+                    permanentemente
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmBan()">
+                    <i class="bi bi-hammer"></i> Banear
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para silenciar -->
+<div class="modal fade" id="timeoutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">🔇 Silenciar Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-white">Usuario: <strong id="timeoutUsername"></strong></p>
+                <div class="mb-3">
+                    <label class="form-label text-white">Duración</label>
+                    <select class="form-control" id="timeoutDuration">
+                        <option value="5">5 minutos</option>
+                        <option value="10">10 minutos</option>
+                        <option value="30">30 minutos</option>
+                        <option value="60">1 hora</option>
+                        <option value="360">6 horas</option>
+                        <option value="1440">1 día</option>
+                        <option value="10080">7 días</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white">Razón</label>
+                    <textarea class="form-control" id="timeoutReason" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="confirmTimeout()">
+                    <i class="bi bi-mic-mute"></i> Silenciar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const token = localStorage.getItem('token');
+    let currentPage = 0;
+    const usersPerPage = 20;
+    let allUsers = [];
+    let currentEditUserId = null;
+
+    // Cargar usuarios y estadísticas
+    async function loadUsers() {
+        try {
+            // Cargar estadísticas
+            const statsResponse = await fetch('/api/users/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const stats = await statsResponse.json();
+
+            document.getElementById('totalUsers').textContent = stats.total_users.toLocaleString();
+            document.getElementById('totalPoints').textContent = stats.total_points.toLocaleString();
+            document.getElementById('avgLevel').textContent = stats.avg_level.toFixed(1);
+
+            // Cargar usuarios
+            const usersResponse = await fetch('/api/users/?skip=0&limit=1000', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!usersResponse.ok) {
+                if (usersResponse.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                throw new Error('Error cargando usuarios');
+            }
+
+            allUsers = await usersResponse.json();
+            renderUsers();
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('usersTableBody').innerHTML =
+                '<tr><td colspan="8" class="text-center text-danger">Error cargando usuarios</td></tr>';
+        }
+    }
+
+    // Renderizar tabla de usuarios
+    function renderUsers(filteredUsers = null) {
+        const users = filteredUsers || allUsers;
+        const start = currentPage * usersPerPage;
+        const end = start + usersPerPage;
+        const pageUsers = users.slice(start, end);
+
+        if (pageUsers.length === 0) {
+            document.getElementById('usersTableBody').innerHTML =
+                '<tr><td colspan="8" class="text-center text-muted">No hay usuarios</td></tr>';
+            return;
+        }
+
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = pageUsers.map(user => `
+            <tr>
+                <td><code>${user.discord_id}</code></td>
+                <td>${user.username}</td>
+                <td><span class="badge bg-warning">${user.points.toLocaleString()}</span></td>
+                <td><span class="badge bg-info">${user.level}</span></td>
+                <td>${user.exp.toLocaleString()}</td>
+                <td>${user.total_messages.toLocaleString()}</td>
+                <td>${new Date(user.last_activity).toLocaleDateString()}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-primary" onclick="editPoints(${user.id}, '${user.username}', ${user.points})" title="Editar puntos">
+                            <i class="bi bi-coin"></i>
+                        </button>
+                        <button class="btn btn-sm btn-info" onclick="editLevel(${user.id}, '${user.username}', ${user.level})" title="Editar nivel">
+                            <i class="bi bi-star"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="kickUser(${user.discord_id}, '${user.username}')" title="Expulsar">
+                            <i class="bi bi-door-open"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="banUser(${user.discord_id}, '${user.username}')" title="Banear">
+                            <i class="bi bi-hammer"></i>
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="timeoutUser(${user.discord_id}, '${user.username}')" title="Silenciar">
+                            <i class="bi bi-mic-mute"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        renderPagination(users.length);
+    }
+
+    // Renderizar paginación
+    function renderPagination(totalUsers) {
+        const totalPages = Math.ceil(totalUsers / usersPerPage);
+        const pagination = document.getElementById('pagination');
+
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+
+        // Botón anterior
+        html += `
+            <li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Anterior</a>
+            </li>
+        `;
+
+        // Páginas
+        for (let i = 0; i < totalPages; i++) {
+            if (i === 0 || i === totalPages - 1 || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                html += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i + 1}</a>
+                    </li>
+                `;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+
+        // Botón siguiente
+        html += `
+            <li class="page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Siguiente</a>
+            </li>
+        `;
+
+        pagination.innerHTML = html;
+    }
+
+    // Cambiar página
+    function changePage(page) {
+        currentPage = page;
+        renderUsers();
+    }
+
+    // Buscar usuarios
+    function searchUsers() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        if (!query) {
+            currentPage = 0;
+            renderUsers();
+            return;
+        }
+
+        const filtered = allUsers.filter(user =>
+            user.username.toLowerCase().includes(query) ||
+            user.discord_id.toString().includes(query)
+        );
+
+        currentPage = 0;
+        renderUsers(filtered);
+    }
+
+    // Editar puntos
+    function editPoints(userId, username, currentPoints) {
+        currentEditUserId = userId;
+        document.getElementById('editPointsUsername').textContent = username;
+        document.getElementById('editPointsCurrent').textContent = currentPoints.toLocaleString();
+        document.getElementById('editPointsInput').value = currentPoints;
+        new bootstrap.Modal(document.getElementById('editPointsModal')).show();
+    }
+
+    // Guardar puntos
+    async function savePoints() {
+        const newPoints = parseInt(document.getElementById('editPointsInput').value);
+
+        if (isNaN(newPoints) || newPoints < 0) {
+            alert('Ingresa un valor válido');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/users/${currentEditUserId}/points`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ points: newPoints })
+            });
+
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('editPointsModal')).hide();
+                await loadUsers();
+                alert('Puntos actualizados correctamente');
+            } else {
+                alert('Error actualizando puntos');
+            }
+        } catch (error) {
+            alert('Error de conexión');
+        }
+    }
+
+    // Editar nivel
+    function editLevel(userId, username, currentLevel) {
+        currentEditUserId = userId;
+        document.getElementById('editLevelUsername').textContent = username;
+        document.getElementById('editLevelCurrent').textContent = currentLevel;
+        document.getElementById('editLevelInput').value = currentLevel;
+        new bootstrap.Modal(document.getElementById('editLevelModal')).show();
+    }
+
+    // Guardar nivel
+    async function saveLevel() {
+        const newLevel = parseInt(document.getElementById('editLevelInput').value);
+
+        if (isNaN(newLevel) || newLevel < 1 || newLevel > 100) {
+            alert('Ingresa un nivel entre 1 y 100');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/users/${currentEditUserId}/level`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ level: newLevel })
+            });
+
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('editLevelModal')).hide();
+                await loadUsers();
+                alert('Nivel actualizado correctamente');
+            } else {
+                alert('Error actualizando nivel');
+            }
+        } catch (error) {
+            alert('Error de conexión');
+        }
+    }
+
+    // Cargar al inicio
+    loadUsers();
+
+    // Buscar al presionar Enter
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchUsers();
+    });
+
+    // === FUNCIONES DE MODERACIÓN ===
+    let currentModUserId = null;
+    let currentModUsername = '';
+
+    // Expulsar usuario
+    function kickUser(discordId, username) {
+        currentModUserId = discordId;
+        currentModUsername = username;
+        document.getElementById('kickUsername').textContent = username;
+        document.getElementById('kickReason').value = '';
+        new bootstrap.Modal(document.getElementById('kickModal')).show();
+    }
+
+    async function confirmKick() {
+        const reason = document.getElementById('kickReason').value.trim();
+        if (!reason) {
+            alert('Debes ingresar una razón');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/moderation/kick', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: currentModUserId,
+                    reason: reason
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('kickModal')).hide();
+                alert(data.message);
+                await loadUsers();
+            } else {
+                alert('Error: ' + (data.detail || 'No se pudo expulsar al usuario'));
+            }
+        } catch (error) {
+            alert('Error de conexión: ' + error.message);
+        }
+    }
+
+    // Banear usuario
+    function banUser(discordId, username) {
+        currentModUserId = discordId;
+        currentModUsername = username;
+        document.getElementById('banUsername').textContent = username;
+        document.getElementById('banReason').value = '';
+        document.getElementById('banDeleteDays').value = '0';
+        new bootstrap.Modal(document.getElementById('banModal')).show();
+    }
+
+    async function confirmBan() {
+        const reason = document.getElementById('banReason').value.trim();
+        if (!reason) {
+            alert('Debes ingresar una razón');
+            return;
+        }
+
+        const deleteDays = parseInt(document.getElementById('banDeleteDays').value);
+
+        try {
+            const response = await fetch('/api/moderation/ban', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: currentModUserId,
+                    reason: reason,
+                    delete_message_days: deleteDays
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('banModal')).hide();
+                alert(data.message);
+                await loadUsers();
+            } else {
+                alert('Error: ' + (data.detail || 'No se pudo banear al usuario'));
+            }
+        } catch (error) {
+            alert('Error de conexión: ' + error.message);
+        }
+    }
+
+    // Silenciar usuario
+    function timeoutUser(discordId, username) {
+        currentModUserId = discordId;
+        currentModUsername = username;
+        document.getElementById('timeoutUsername').textContent = username;
+        document.getElementById('timeoutReason').value = '';
+        document.getElementById('timeoutDuration').value = '5';
+        new bootstrap.Modal(document.getElementById('timeoutModal')).show();
+    }
+
+    async function confirmTimeout() {
+        const reason = document.getElementById('timeoutReason').value.trim();
+        if (!reason) {
+            alert('Debes ingresar una razón');
+            return;
+        }
+
+        const duration = parseInt(document.getElementById('timeoutDuration').value);
+
+        try {
+            const response = await fetch('/api/moderation/timeout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: currentModUserId,
+                    duration_minutes: duration,
+                    reason: reason
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('timeoutModal')).hide();
+                alert(data.message);
+                await loadUsers();
+            } else {
+                alert('Error: ' + (data.detail || 'No se pudo silenciar al usuario'));
+            }
+        } catch (error) {
+            alert('Error de conexión: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}

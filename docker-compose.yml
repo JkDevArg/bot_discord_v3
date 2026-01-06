@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  bot:
+    build: .
+    container_name: discord_bot
+    command: python -m bot.main
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/botdiscord
+    depends_on:
+      - db
+    networks:
+      - bot_network
+
+  web:
+    build: .
+    container_name: discord_web
+    command: python -m web.main
+    ports:
+      - "8010:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env
+    restart: always
+    depends_on:
+      - bot
+      - db
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/botdiscord
+    networks:
+      - bot_network
+
+  db:
+    image: postgres:15-alpine
+    container_name: discord_db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=botdiscord
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - bot_network
+
+volumes:
+  postgres_data:
+
+networks:
+  bot_network:
+    driver: bridge

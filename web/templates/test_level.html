@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Level Announcement</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+
+        button {
+            background: #5865F2;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #4752C4;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success {
+            background: #43B581;
+        }
+
+        .error {
+            background: #F04747;
+        }
+
+        .info {
+            background: #3498db;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 Test Anuncios de Nivel</h1>
+
+    <div class="info">
+        <strong>ℹ️ Información:</strong><br>
+        Esta página envía un anuncio de prueba al canal #bot-anuncios<br>
+        Canal ID: 1456918414214955058
+    </div>
+
+    <button onclick="testLevelUp()">🎉 Enviar Anuncio de Nivel</button>
+
+    <div id="result"></div>
+
+    <script>
+        async function testLevelUp() {
+            const token = localStorage.getItem('token');
+            const resultDiv = document.getElementById('result');
+
+            resultDiv.style.display = 'block';
+            resultDiv.className = '';
+            resultDiv.textContent = '⏳ Enviando anuncio de prueba...';
+
+            try {
+                const response = await fetch('/api/test/level-announcement', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'success';
+                    resultDiv.textContent = '✅ ' + data.message;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.textContent = '❌ Error: ' + (data.error || 'Unknown error');
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.textContent = '❌ Error de conexión: ' + error.message;
+            }
+        }
+    </script>
+</body>
+
+</html>
