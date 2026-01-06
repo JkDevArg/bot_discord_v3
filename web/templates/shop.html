@@ -232,17 +232,24 @@
 
     async function loadCategories() {
         const token = localStorage.getItem('token');
+        console.log('Loading categories, token exists:', !!token);
         try {
             const response = await fetch('/api/shop/categories', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            console.log('Categories response status:', response.status);
             if (response.ok) {
                 categories = await response.json();
+                console.log('Categories loaded:', categories);
                 renderCategoryFilters();
                 renderCategorySelect();
                 renderCategoryList();
+            } else {
+                console.error('Failed to load categories:', response.status);
             }
-        } catch (e) { console.error("Error loading categories", e); }
+        } catch (e) {
+            console.error("Error loading categories", e);
+        }
     }
 
     function renderCategoryFilters() {
