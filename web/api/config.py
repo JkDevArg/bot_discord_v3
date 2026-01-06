@@ -15,11 +15,11 @@ router = APIRouter(prefix="/config", tags=["Configuration"])
 
 
 class ChannelConfigRequest(BaseModel):
-    channel_ids: List[int]
+    channel_ids: List[str]
 
 
 class SingleChannelRequest(BaseModel):
-    channel_id: int
+    channel_id: str
 
 
 @router.get("/channels/points")
@@ -80,7 +80,7 @@ async def get_announcement_channel(current_user: AdminUser = Depends(get_current
         if not config or not config.channel_ids:
             return {"channel_id": None}
         
-        channel_id = int(config.channel_ids)
+        channel_id = config.channel_ids
         return {"channel_id": channel_id}
     finally:
         db.close()
@@ -126,7 +126,7 @@ async def get_log_channel(current_user: AdminUser = Depends(get_current_user)):
         if not config or not config.channel_ids:
             return {"channel_id": None}
         
-        channel_id = int(config.channel_ids)
+        channel_id = config.channel_ids
         return {"channel_id": channel_id}
     finally:
         db.close()

@@ -278,7 +278,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    channel_ids: pointsChannels.map(Number)
+                    channel_ids: pointsChannels
                 })
             });
 
@@ -309,7 +309,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    channel_id: parseInt(channelId)
+                    channel_id: channelId
                 })
             });
 
@@ -341,7 +341,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    channel_id: parseInt(channelId)
+                    channel_id: channelId
                 })
             });
 
