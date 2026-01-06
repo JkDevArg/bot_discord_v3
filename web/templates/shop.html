@@ -461,13 +461,19 @@
         }
     }
 
-    function showCreateModal() {
+    async function showCreateModal() {
         document.getElementById('itemModalTitle').textContent = 'Nuevo Item';
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('itemActive').checked = true;
         document.getElementById('itemStock').value = '-1';
         document.getElementById('imagePreview').style.display = 'none';
+
+        // Ensure categories are loaded before rendering
+        if (categories.length === 0) {
+            console.log('Categories not loaded yet, loading now...');
+            await loadCategories();
+        }
 
         // Render categories in the select
         renderCategorySelect();
