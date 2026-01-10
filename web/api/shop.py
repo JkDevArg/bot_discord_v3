@@ -256,7 +256,7 @@ async def update_shop_item(
         if item_update.is_active is not None:
             item.is_active = item_update.is_active
         if item_update.category_id is not None:
-            item.category_id = item_update.category_id
+            item.category_id = item_update.category_id if item_update.category_id != 0 else None
         
         db.commit()
         db.refresh(item)
