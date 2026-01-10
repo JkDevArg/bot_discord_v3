@@ -74,6 +74,37 @@ app.include_router(roles_router, prefix="/api")
 from web.api.shop import router as shop_router
 app.include_router(shop_router, prefix="/api")
 
+# Importar router de eventos
+from web.api.events import router as events_router
+app.include_router(events_router, prefix="/api")
+
+# Importar router de leaderboard
+from web.api.leaderboard import router as leaderboard_router
+app.include_router(leaderboard_router, prefix="/api")
+
+# Importar router de analytics
+from web.api.analytics import router as analytics_router
+app.include_router(analytics_router, prefix="/api")
+
+# Importar middleware
+from web.middleware import (
+    error_handler_middleware,
+    validation_exception_handler,
+    http_exception_handler,
+    rate_limit_middleware
+)
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+# Agregar middleware
+app.middleware("http")(error_handler_middleware)
+app.middleware("http")(rate_limit_middleware)
+
+# Agregar exception handlers
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -157,6 +188,15 @@ async def settings_page(request: Request, user = Depends(get_current_user_cookie
     if not user:
         return RedirectResponse(url="/login")
     return templates.TemplateResponse("settings.html", {"request": request, "user": user})
+
+
+@app.get("/leaderboard")
+async def leaderboard_page(request: Request, user = Depends(get_current_user_cookie)):
+    """Página de leaderboards"""
+    if not user:
+        return RedirectResponse(url="/login")
+    return templates.TemplateResponse("leaderboard.html", {"request": request, "user": user})
+
 
 
 @app.get("/test-log")
