@@ -7,58 +7,87 @@
 
 <!-- Shop Stats Dashboard -->
 <div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card bg-dark text-white h-100 border-primary">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
             <div class="card-body text-center">
-                <h6 class="text-muted text-uppercase mb-2">Total Compras</h6>
-                <h3 class="display-6 fw-bold text-white" id="statPurchases">0</h3>
+                <i class="bi bi-bag fs-1 text-primary mb-2"></i>
+                <h3 class="mt-2" id="statPurchases">0</h3>
+                <p class="text-muted mb-0">Total Compras</p>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card bg-dark text-white h-100 border-warning">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
             <div class="card-body text-center">
-                <h6 class="text-muted text-uppercase mb-2">Puntos Gastados</h6>
-                <h3 class="display-6 fw-bold text-warning" id="statSpent">0</h3>
+                <i class="bi bi-coin fs-1 text-warning mb-2"></i>
+                <h3 class="mt-2 text-warning" id="statSpent">0</h3>
+                <p class="text-muted mb-0">Puntos Gastados</p>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card bg-dark text-white h-100 border-info">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
             <div class="card-body text-center">
-                <h6 class="text-muted text-uppercase mb-2">Item Más Popular</h6>
-                <h5 class="fw-bold text-info mt-2" id="statPopular">N/A</h5>
+                <i class="bi bi-star fs-1 text-info mb-2"></i>
+                <h5 class="mt-2 text-info" id="statPopular">N/A</h5>
+                <p class="text-muted mb-0">Item Más Popular</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <span><i class="bi bi-bag"></i> Items de la Tienda</span>
-        <div>
-            <button class="btn btn-dark-glow btn-sm me-2" onclick="showHistoryModal()">
-                <i class="bi bi-clock-history"></i> Historial
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-dark-glow btn-sm" onclick="showHistoryModal()">
+                <i class="bi bi-clock-history"></i> <span class="d-none d-md-inline">Historial</span>
             </button>
-            <button class="btn btn-dark-glow btn-sm me-2" onclick="showCategoryModal()">
-                <i class="bi bi-tags"></i> Categorías
+            <button class="btn btn-dark-glow btn-sm" onclick="showCategoryModal()">
+                <i class="bi bi-tags"></i> <span class="d-none d-md-inline">Categorías</span>
             </button>
             <button class="btn btn-primary btn-sm" onclick="showCreateModal()">
-                <i class="bi bi-plus-circle"></i> Nuevo Item
+                <i class="bi bi-plus-circle"></i> <span class="d-none d-md-inline">Nuevo Item</span>
             </button>
         </div>
     </div>
     <div class="card-body">
-        <div id="itemsGrid" class="row">
-            <p class="text-muted">Cargando items...</p>
+        <!-- Table View -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th style="width: 80px;" class="d-none d-md-table-cell">Imagen</th>
+                        <th>Nombre</th>
+                        <th class="d-none d-lg-table-cell">Categoría</th>
+                        <th class="text-end">Precio</th>
+                        <th class="text-center d-none d-md-table-cell">Stock</th>
+                        <th class="text-center d-none d-md-table-cell">Estado</th>
+                        <th class="text-end" style="width: 120px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">Cargando items...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+
+        <!-- Pagination -->
+        <nav aria-label="Paginación de items" class="mt-3">
+            <ul class="pagination pagination-sm justify-content-center mb-0" id="pagination">
+                <!-- Dynamic pagination -->
+            </ul>
+        </nav>
     </div>
 </div>
 
 <!-- Modal Categorías -->
 <div class="modal fade" id="categoryModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content bg-dark text-white">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Gestión de Categorías</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -84,20 +113,20 @@
 <!-- Modal Historial -->
 <div class="modal fade" id="historyModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content bg-dark text-white">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-clock-history"></i> Historial de Compras</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table table-dark table-hover">
+                    <table class="table table-hover">
                         <thead>
                             <tr>
                                 <th>Usuario</th>
                                 <th>Item</th>
-                                <th>Precio</th>
-                                <th>Fecha</th>
+                                <th class="text-end">Precio</th>
+                                <th class="d-none d-md-table-cell">Fecha</th>
                             </tr>
                         </thead>
                         <tbody id="historyTableBody">
@@ -115,7 +144,7 @@
 <!-- Modal Crear/Editar Item -->
 <div class="modal fade" id="itemModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content bg-dark text-white">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="itemModalTitle">Nuevo Item</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -138,21 +167,23 @@
 
                             <div class="mb-3">
                                 <label for="itemCategory" class="form-label">Categoría</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-dark border-secondary text-white"><i
-                                            class="bi bi-tag"></i></span>
-                                    <select class="form-select" id="itemCategory">
-                                        <option value="">Sin Categoría</option>
-                                    </select>
-                                </div>
+                                <select class="form-select" id="itemCategory"
+                                    style="color: #fff !important; background-color: rgba(255, 255, 255, 0.08) !important;">
+                                    <option value="" style="color: #fff; background-color: #1a1a2e;">Sin Categoría
+                                    </option>
+                                </select>
                             </div>
 
                             <div class="mb-3">
                                 <label for="itemType" class="form-label">Tipo de Acción</label>
-                                <select class="form-select" id="itemType">
-                                    <option value="custom">Personalizado</option>
-                                    <option value="role">Rol de Discord</option>
-                                    <option value="benefit">Beneficio</option>
+                                <select class="form-select" id="itemType"
+                                    style="color: #fff !important; background-color: rgba(255, 255, 255, 0.08) !important;">
+                                    <option value="custom" style="color: #fff; background-color: #1a1a2e;">Personalizado
+                                    </option>
+                                    <option value="role" style="color: #fff; background-color: #1a1a2e;">Rol de Discord
+                                    </option>
+                                    <option value="benefit" style="color: #fff; background-color: #1a1a2e;">Beneficio
+                                    </option>
                                 </select>
                             </div>
 
@@ -205,17 +236,20 @@
 <script>
     let items = [];
     let categories = [];
-    let currentFilter = 'all';
     let itemModal;
     let historyModal;
     let categoryModal;
+
+    // Pagination
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
     document.addEventListener('DOMContentLoaded', function () {
         itemModal = new bootstrap.Modal(document.getElementById('itemModal'));
         historyModal = new bootstrap.Modal(document.getElementById('historyModal'));
         categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
 
-        loadCategories(); // Load categories first
+        loadCategories();
         loadItems();
         loadStats();
 
@@ -232,62 +266,36 @@
 
     async function loadCategories() {
         const token = localStorage.getItem('token');
-        console.log('Loading categories, token exists:', !!token);
         try {
             const response = await fetch('/api/shop/categories', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            console.log('Categories response status:', response.status);
             if (response.ok) {
                 categories = await response.json();
-                console.log('Categories loaded:', categories);
-                renderCategoryFilters();
                 renderCategorySelect();
                 renderCategoryList();
-            } else {
-                console.error('Failed to load categories:', response.status);
             }
         } catch (e) {
             console.error("Error loading categories", e);
         }
     }
 
-    function renderCategoryFilters() {
-        const container = document.getElementById('categoryFilters');
-        let html = `<li class="nav-item">
-                <a class="nav-link ${currentFilter === 'all' ? 'active' : ''}" href="#" onclick="filterItems('all', this)">Todo</a>
-            </li>`;
-
-        categories.forEach(cat => {
-            const active = currentFilter === cat.id ? 'active' : '';
-            html += `<li class="nav-item">
-                <a class="nav-link ${active}" href="#" onclick="filterItems(${cat.id}, this)">${cat.name}</a>
-            </li>`;
-        });
-        container.innerHTML = html;
-    }
-
     function renderCategorySelect() {
         const select = document.getElementById('itemCategory');
-        if (!select) {
-            console.error('itemCategory select element not found!');
-            return;
-        }
+        if (!select) return;
 
-        console.log('Rendering category select, categories:', categories);
-        let html = '<option value="">Sin Categoría</option>';
+        let html = '<option value="" style="color: #fff; background-color: #1a1a2e;">Sin Categoría</option>';
         categories.forEach(cat => {
-            html += `<option value="${cat.id}">${cat.name}</option>`;
+            html += `<option value="${cat.id}" style="color: #fff; background-color: #1a1a2e;">${cat.name}</option>`;
         });
         select.innerHTML = html;
-        console.log('Category select rendered, innerHTML:', select.innerHTML);
     }
 
     function renderCategoryList() {
         const container = document.getElementById('categoryList');
         let html = '';
         categories.forEach(cat => {
-            html += `<div class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
+            html += `<div class="list-group-item d-flex justify-content-between align-items-center">
                 <span>${cat.name}</span>
                 <span class="badge bg-secondary">${cat.items ? cat.items.length : 0} items</span>
             </div>`;
@@ -314,20 +322,11 @@
 
             if (response.ok) {
                 document.getElementById('newCategoryName').value = '';
-                loadCategories(); // Reload all
+                loadCategories();
             } else {
                 alert("Error al crear categoría");
             }
         } catch (e) { alert("Error: " + e.message); }
-    }
-
-    function filterItems(categoryId, element) {
-        currentFilter = categoryId;
-        renderCategoryFilters(); // Re-render to update active class
-        renderItemsGrid();
-
-        // Prevent default anchor behavior
-        if (element) event.preventDefault();
     }
 
     async function loadStats() {
@@ -376,8 +375,8 @@
                     <tr>
                         <td><span class="text-info">${h.user_name}</span></td>
                         <td>${h.item_name}</td>
-                        <td class="text-warning text-end">${h.price.toLocaleString()}</td>
-                        <td class="small text-muted">${date}</td>
+                        <td class="text-warning text-end">${h.price.toLocaleString()} pts</td>
+                        <td class="small text-muted d-none d-md-table-cell">${date}</td>
                     </tr>
                 `;
             });
@@ -398,62 +397,107 @@
             if (!response.ok) throw new Error('Error cargando items');
 
             items = await response.json();
-            renderItemsGrid();
+            renderItemsTable();
         } catch (error) {
-            document.getElementById('itemsGrid').innerHTML =
-                `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            document.getElementById('itemsTableBody').innerHTML =
+                `<tr><td colspan="8" class="text-center text-danger">Error: ${error.message}</td></tr>`;
         }
     }
 
-    function renderItemsGrid() {
-        const container = document.getElementById('itemsGrid');
+    function renderItemsTable() {
+        const tbody = document.getElementById('itemsTableBody');
 
-        // Filter items
-        let visibleItems = items;
-        if (currentFilter !== 'all') {
-            visibleItems = items.filter(i => i.category_id === currentFilter);
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted p-5">No hay items registrados.</td></tr>';
+            document.getElementById('pagination').innerHTML = '';
+            return;
         }
 
-        if (visibleItems.length === 0) {
-            container.innerHTML = '<p class="text-muted col-12 text-center p-5">No hay items en esta vista.</p>';
+        // Pagination
+        const totalPages = Math.ceil(items.length / itemsPerPage);
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginatedItems = items.slice(start, end);
+
+        // Render table rows
+        let html = '';
+        paginatedItems.forEach(item => {
+            const imageUrl = item.image_url || 'https://via.placeholder.com/60x60?text=?';
+            const stockText = item.stock === -1 ? '∞' : item.stock;
+            const statusBadge = item.is_active ?
+                '<span class="badge bg-success">Activo</span>' :
+                '<span class="badge bg-secondary">Inactivo</span>';
+            const categoryName = categories.find(c => c.id === item.category_id)?.name || 'Sin categoría';
+
+            html += `
+            <tr>
+                <td class="text-muted">#${item.id}</td>
+                <td class="d-none d-md-table-cell">
+                    <img src="${imageUrl}" alt="${item.name}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                </td>
+                <td>
+                    <div class="fw-bold">${item.name}</div>
+                    <small class="text-muted d-md-none">${item.price.toLocaleString()} pts</small>
+                </td>
+                <td class="text-muted d-none d-lg-table-cell">${categoryName}</td>
+                <td class="text-warning text-end fw-bold d-none d-md-table-cell">${item.price.toLocaleString()} pts</td>
+                <td class="text-center d-none d-md-table-cell">${stockText}</td>
+                <td class="text-center d-none d-md-table-cell">${statusBadge}</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-warning" onclick="editItem(${item.id})" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem(${item.id}, '${item.name}')" title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        });
+
+        tbody.innerHTML = html;
+
+        // Render pagination
+        renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+        const pagination = document.getElementById('pagination');
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
             return;
         }
 
         let html = '';
-        visibleItems.forEach(item => {
-            const imageUrl = item.image_url || 'https://via.placeholder.com/300x200?text=Sin+Imagen';
-            const stockText = item.stock === -1 ? 'Ilimitado' : item.stock;
-            const statusBadge = item.is_active ?
-                '<span class="badge bg-success">Activo</span>' :
-                '<span class="badge bg-danger">Inactivo</span>';
 
-            html += `
-            <div class="col-md-4 mb-3">
-                <div class="card bg-dark text-white h-100">
-                    <img src="${imageUrl}" class="card-img-top" alt="${item.name}" style="height: 200px; object-fit: cover;">
-                    <div class="card-body">
-                        <h5 class="card-title">${item.name}</h5>
-                        <p class="card-text text-muted small card-text-clamp" title="${item.description || ''}">${item.description || 'Sin descripción'}</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="h5 mb-0 text-warning">${item.price.toLocaleString()} pts</span>
-                            ${statusBadge}
-                        </div>
-                        <small class="text-muted">Stock: ${stockText}</small>
-                    </div>
-                    <div class="card-footer bg-transparent">
-                        <button class="btn btn-sm btn-warning" onclick="editItem(${item.id})">
-                            <i class="bi bi-pencil"></i> Editar
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteItem(${item.id}, '${item.name}')">
-                            <i class="bi bi-trash"></i> Eliminar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        });
+        // Previous button
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Anterior</a>
+        </li>`;
 
-        container.innerHTML = html;
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                </li>`;
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+
+        // Next button
+        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Siguiente</a>
+        </li>`;
+
+        pagination.innerHTML = html;
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        renderItemsTable();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function previewImage(event) {
@@ -476,15 +520,12 @@
         document.getElementById('itemStock').value = '-1';
         document.getElementById('imagePreview').style.display = 'none';
 
-        // Ensure categories are loaded before rendering
         if (categories.length === 0) {
-            console.log('Categories not loaded yet, loading now...');
             await loadCategories();
         }
 
-        // Render categories in the select
         renderCategorySelect();
-        document.getElementById('itemCategory').value = ""; // Reset to "Sin Categoría"
+        document.getElementById('itemCategory').value = "";
 
         itemModal.show();
     }
@@ -602,16 +643,61 @@
 </script>
 
 <style>
-    .card {
-        transition: transform 0.2s;
+    /* Responsive table improvements */
+    @media (max-width: 768px) {
+        .table td {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
     }
 
-    .card:hover {
-        transform: translateY(-5px);
+    /* Select styling */
+    .form-select option {
+        color: #fff !important;
+        background-color: #1a1a2e !important;
     }
 
-    .card-img-top {
-        border-bottom: 1px solid #40444B;
+    .form-select {
+        color: #fff !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Table hover effect */
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Pagination styling */
+    .pagination .page-link {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+    }
+
+    .pagination .page-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        background-color: rgba(255, 255, 255, 0.02);
+        border-color: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.3);
     }
 </style>
 {% endblock %}
