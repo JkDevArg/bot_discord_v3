@@ -3,12 +3,16 @@ services:
     build: .
     container_name: discord_bot
     command: python -m bot.main
-    env_file:
-      - .env
     volumes:
+      - ./bot:/app/bot
       - ./data:/app/data
       - ./logs:/app/logs
     restart: always
+    environment:
+      DISCORD_TOKEN: "${DISCORD_TOKEN:-MTQ1NjkxMDg3NDI3ODM2MzIxNg.GZUgqZ.TDSnl6Kk0F4aDl2X_N8L78Tzo7twqbRiZnZTfI}"
+      DISCORD_GUILD_ID: "${DISCORD_GUILD_ID:-1456358603790483509}"
+      DATABASE_URL: "${DATABASE_URL:-postgresql://postgres:postgres@db:5432/botdiscord}"
+      ENVIRONMENT: "${ENVIRONMENT:-production}"
     depends_on:
       db:
         condition: service_healthy
@@ -18,15 +22,21 @@ services:
   web:
     build: .
     container_name: discord_web
-    command: python -m web.main
-    env_file:
-      - .env
+    command: uvicorn web.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8010:8000"
     volumes:
+      - ./web:/app/web
+      - ./bot:/app/bot
       - ./data:/app/data
       - ./logs:/app/logs
     restart: always
+    environment:
+      DISCORD_TOKEN: "${DISCORD_TOKEN:-MTQ1NjkxMDg3NDI3ODM2MzIxNg.GZUgqZ.TDSnl6Kk0F4aDl2X_N8L78Tzo7twqbRiZnZTfI}"
+      DISCORD_GUILD_ID: "${DISCORD_GUILD_ID:-1456358603790483509}"
+      DATABASE_URL: "${DATABASE_URL:-postgresql://postgres:postgres@db:5432/botdiscord}"
+      WEB_SECRET_KEY: "${WEB_SECRET_KEY:-th3h4ck3rsl4bs}"
+      ENVIRONMENT: "${ENVIRONMENT:-production}"
     depends_on:
       bot:
         condition: service_started
