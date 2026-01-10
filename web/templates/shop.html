@@ -269,11 +269,18 @@
 
     function renderCategorySelect() {
         const select = document.getElementById('itemCategory');
+        if (!select) {
+            console.error('itemCategory select element not found!');
+            return;
+        }
+
+        console.log('Rendering category select, categories:', categories);
         let html = '<option value="">Sin Categoría</option>';
         categories.forEach(cat => {
             html += `<option value="${cat.id}">${cat.name}</option>`;
         });
         select.innerHTML = html;
+        console.log('Category select rendered, innerHTML:', select.innerHTML);
     }
 
     function renderCategoryList() {
