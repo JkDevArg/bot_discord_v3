@@ -3,7 +3,7 @@ API endpoints for leaderboards
 """
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from typing import List, Literal
+from typing import List, Literal, Optional
 from bot.database.connection import SessionLocal
 from bot.database.models import User, Purchase, EventParticipant
 from web.auth import get_current_user, AdminUser
