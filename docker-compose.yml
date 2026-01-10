@@ -1,20 +1,17 @@
-version: "3.8"
-
 services:
   bot:
     build: .
     container_name: discord_bot
     command: python -m bot.main
+    env_file:
+      - .env
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
-      - ./.env:/app/.env
     restart: always
-    environment:
-      - ENVIRONMENT=production
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/botdiscord
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - bot_network
 
@@ -22,19 +19,19 @@ services:
     build: .
     container_name: discord_web
     command: python -m web.main
+    env_file:
+      - .env
     ports:
       - "8010:8000"
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
-      - ./.env:/app/.env
     restart: always
     depends_on:
-      - bot
-      - db
-    environment:
-      - ENVIRONMENT=production
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/botdiscord
+      bot:
+        condition: service_started
+      db:
+        condition: service_healthy
     networks:
       - bot_network
 
@@ -43,15 +40,20 @@ services:
     container_name: discord_db
     restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=botdiscord
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: botdiscord
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - bot_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
