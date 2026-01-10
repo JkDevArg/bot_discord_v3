@@ -1,100 +1,67 @@
-# Script de inicialización de base de datos
 """
-Script para inicializar la base de datos y crear datos de ejemplo
+Database initialization script
+Creates all tables and ensures schema is up to date
+Safe to run multiple times (idempotent)
 """
+from bot.database.connection import SessionLocal, engine, Base
+from bot.database.models import *
+from sqlalchemy import text, inspect
 import sys
-sys.path.insert(0, '.')
 
-from bot.database.connection import init_db, SessionLocal
-from bot.database.models import AdminUser, AnnouncementConfig
-from bot.utils.security import hash_password
-from bot.utils.logger import bot_logger
+def check_column_exists(table_name: str, column_name: str) -> bool:
+    """Check if a column exists in a table"""
+    inspector = inspect(engine)
+    columns = [col['name'] for col in inspector.get_columns(table_name)]
+    return column_name in columns
 
-def create_admin_user():
-    """Crear usuario administrador por defecto"""
-    db = SessionLocal()
-    try:
-        # Verificar si ya existe un admin
-        existing = db.query(AdminUser).filter(AdminUser.username == 'admin').first()
-        if existing:
-            print("⚠️  Usuario 'admin' ya existe")
-            return
-        
-        admin = AdminUser(
-            username='admin',
-            password_hash=hash_password('admin123'),
-            is_active=True,
-            mfa_enabled=False
-        )
-        db.add(admin)
-        db.commit()
-        print("✅ Usuario admin creado:")
-        print("   Usuario: admin")
-        print("   Contraseña: admin123")
-        print("   ⚠️  CAMBIA LA CONTRASEÑA DESPUÉS DEL PRIMER LOGIN")
+def init_database():
+    """Initialize database with all tables and migrations"""
+    print("🔧 Initializing database...")
     
-    except Exception as e:
-        print(f"❌ Error creando admin: {e}")
-        db.rollback()
-    finally:
-        db.close()
-
-def create_announcement_configs():
-    """Crear configuraciones de anuncios por defecto"""
-    db = SessionLocal()
     try:
-        # Nota: Debes cambiar estos IDs de canal por los de tu servidor
-        configs = [
-            ('level_up', 0, False),  # Cambiar 0 por ID de canal real
-            ('purchase', 0, False),
-            ('event', 0, False)
-        ]
+        # Create all tables
+        print("📊 Creating tables...")
+        Base.metadata.create_all(bind=engine)
+        print("✅ Tables created")
         
-        for ann_type, channel_id, enabled in configs:
-            existing = db.query(AnnouncementConfig).filter(
-                AnnouncementConfig.announcement_type == ann_type
-            ).first()
-            
-            if not existing:
-                config = AnnouncementConfig(
-                    announcement_type=ann_type,
-                    channel_id=channel_id,
-                    is_enabled=enabled
-                )
-                db.add(config)
+        # Check and add category_id column if missing
+        if not check_column_exists('shop_items', 'category_id'):
+            print("📝 Adding category_id column to shop_items...")
+            db = SessionLocal()
+            try:
+                db.execute(text("""
+                    ALTER TABLE shop_items 
+                    ADD COLUMN category_id INTEGER REFERENCES item_categories(id)
+                """))
+                db.commit()
+                print("✅ category_id column added")
+            except Exception as e:
+                print(f"⚠️  Could not add category_id: {e}")
+                db.rollback()
+            finally:
+                db.close()
+        else:
+            print("✅ category_id column already exists")
         
-        db.commit()
-        print("✅ Configuraciones de anuncios creadas")
-        print("   ⚠️  Configura los IDs de canal desde el panel web")
-    
+        # Verify critical tables exist
+        inspector = inspect(engine)
+        required_tables = ['users', 'shop_items', 'item_categories', 'admin_users']
+        existing_tables = inspector.get_table_names()
+        
+        for table in required_tables:
+            if table in existing_tables:
+                print(f"✅ Table '{table}' exists")
+            else:
+                print(f"❌ Table '{table}' missing!")
+                return False
+        
+        print("\n✅ Database initialized successfully!")
+        return True
+        
     except Exception as e:
-        print(f"❌ Error creando configs: {e}")
-        db.rollback()
-    finally:
-        db.close()
+        print(f"\n❌ Error initializing database: {e}")
+        return False
 
 if __name__ == "__main__":
-    print("=" * 50)
-    print("Inicializando Base de Datos")
-    print("=" * 50)
-    
-    # Inicializar base de datos
-    print("\n1. Creando tablas...")
-    init_db()
-    
-    # Crear usuario admin
-    print("\n2. Creando usuario administrador...")
-    create_admin_user()
-    
-    # Crear configuraciones
-    print("\n3. Creando configuraciones...")
-    create_announcement_configs()
-    
-    print("\n" + "=" * 50)
-    print("✅ Inicialización completada")
-    print("=" * 50)
-    print("\nPróximos pasos:")
-    print("1. Configura tu .env con el token de Discord")
-    print("2. Inicia el bot: python -m bot.main")
-    print("3. Inicia el panel web: python -m web.main")
-    print("4. Configura los canales de anuncios desde el panel web")
+    success = init_database()
+    sys.exit(0 if success else 1)

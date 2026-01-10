@@ -1,289 +1,180 @@
-# Bot de Discord Profesional
+# Discord Bot with Web Panel
 
-Bot de Discord completo con sistema de puntos, roles automáticos, tienda, eventos y panel web administrativo.
+A feature-rich Discord bot with points system, shop, events, and a modern web administration panel.
 
-## 🚀 Características
+## Features
 
-- **Sistema de Puntos**: Gana puntos por actividad con cooldown anti-spam
-- **Roles Automáticos**: Asignación automática de roles según puntos alcanzados
-- **Tienda**: Compra roles y beneficios con puntos
-- **Eventos**: Sistema de eventos con validación de participación y recompensas
-- **Anuncios**: Notificaciones automáticas de level-ups y compras
-- **Panel Web**: Administración completa desde el navegador con MFA
-- **Backups Automáticos**: Backups diarios con rotación de 30 días
-- **Seguridad**: Protección contra spam, SQL injection, y autenticación MFA
+- 🎯 **Points System**: Reward users for activity with customizable points
+- 🛒 **Shop System**: Create items, categories, and manage purchases
+- 👥 **User Management**: Track users, roles, and statistics
+- 📊 **Web Panel**: Modern admin interface for managing everything
+- 🎉 **Events**: Create and manage server events
+- 🔔 **Webhooks**: Automated notifications for important events
+- 📈 **Analytics**: Track user activity and engagement
 
-## 📋 Requisitos
+## Quick Start (Production)
 
-- Python 3.10 o superior
-- Discord Bot Token ([Crear bot](https://discord.com/developers/applications))
-- Servidor Discord con permisos de administrador
+### Prerequisites
 
-## ⚙️ Instalación
+- Docker and Docker Compose installed
+- A Discord bot token ([Get one here](https://discord.com/developers/applications))
+- Your Discord server (guild) ID
+- Your Discord user ID (for admin access)
 
-### 1. Clonar el repositorio
+### Initial Setup
 
-```bash
-git clone <tu-repositorio>
-cd botdiscord
-```
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url> /opt/bot_discord
+   cd /opt/bot_discord
+   ```
 
-### 2. Crear entorno virtual
+2. **Run the initialization script**
+   ```bash
+   chmod +x init_production.sh
+   ./init_production.sh
+   ```
 
-```bash
-python -m venv venv
+   This script will:
+   - Create your `.env` file with your Discord credentials
+   - Generate a secure secret key
+   - Build and start Docker containers
+   - Initialize the database
+   - Create your admin user
 
-# Windows
-venv\Scripts\activate
+3. **Access the web panel**
+   - URL: `http://your-server-ip:8010`
+   - Login with the credentials you created
 
-# Linux/Mac
-source venv/bin/activate
-```
+### Deploying Updates
 
-### 3. Instalar dependencias
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configurar variables de entorno
-
-```bash
-# Copiar archivo de ejemplo
-copy .env.example .env
-
-# Editar .env con tus valores
-notepad .env
-```
-
-**Variables importantes:**
-
-```env
-# Token del bot (obtener en Discord Developer Portal)
-DISCORD_TOKEN=tu_token_aqui
-
-# ID de tu servidor de Discord
-DISCORD_GUILD_ID=123456789
-
-# IDs de administradores (separados por comas)
-ADMIN_USER_IDS=123456789,987654321
-
-# Configuración de puntos
-POINTS_PER_MESSAGE=10
-MESSAGE_COOLDOWN=60
-INACTIVITY_DAYS=60
-INACTIVITY_PENALTY=0.25
-
-# Clave secreta para panel web (cambiar en producción)
-WEB_SECRET_KEY=cambia_esto_en_produccion
-```
-
-### 5. Inicializar base de datos
+When you want to update the bot with new code:
 
 ```bash
-python -c "from bot.database.connection import init_db; init_db()"
+cd /opt/bot_discord
+./deploy.sh
 ```
 
-### 6. Crear usuario administrador para panel web
+This will:
+- Pull the latest changes from git
+- Rebuild the Docker images
+- Restart the services
 
+**Important**: Your `.env` file and database are preserved during updates.
+
+## Environment Variables
+
+All configuration is done through the `.env` file. See `.env.example` for all available options.
+
+### Required Variables
+
+- `DISCORD_TOKEN`: Your bot token
+- `DISCORD_GUILD_ID`: Your server ID
+- `ADMIN_USER_IDS`: Your Discord user ID
+- `DATABASE_URL`: PostgreSQL connection string (auto-configured for Docker)
+- `WEB_SECRET_KEY`: Secret key for web panel (auto-generated)
+
+### Optional Variables
+
+- `POINTS_PER_MESSAGE`: Points per message (default: 10)
+- `MESSAGE_COOLDOWN`: Cooldown in seconds (default: 10)
+- `MAX_POINTS_PER_HOUR`: Max points per hour (default: 100)
+- See `.env.example` for more options
+
+## Manual Commands
+
+### View Logs
 ```bash
-python -c "
-from bot.database.connection import SessionLocal
-from bot.database.models import AdminUser
-from bot.utils.security import hash_password
-
-db = SessionLocal()
-admin = AdminUser(
-    username='admin',
-    password_hash=hash_password('admin123'),
-    is_active=True
-)
-db.add(admin)
-db.commit()
-print('Usuario admin creado: admin / admin123')
-db.close()
-"
+docker compose logs -f          # All services
+docker compose logs -f bot      # Bot only
+docker compose logs -f web      # Web panel only
 ```
 
-**⚠️ IMPORTANTE:** Cambia la contraseña después del primer login.
-
-## 🎮 Uso
-
-### Iniciar el Bot
-
+### Restart Services
 ```bash
-python -m bot.main
+docker compose restart          # All services
+docker compose restart web      # Web panel only
 ```
 
-### Iniciar el Panel Web
-
+### Stop Services
 ```bash
-python -m web.main
+docker compose down             # Stop all
+docker compose down -v          # Stop and remove volumes (⚠️ deletes database)
 ```
 
-Acceder a: `http://localhost:8000`
-
-## 📝 Comandos del Bot
-
-### Comandos de Usuario
-
-- `/points` - Ver tus puntos
-- `/points @usuario` - Ver puntos de otro usuario
-- `/leaderboard` - Ver top de usuarios
-- `/roles` - Ver roles disponibles
-- `/myroles` - Ver tus roles actuales
-- `/shop` - Ver tienda
-- `/buy <id>` - Comprar item
-- `/purchases` - Ver historial de compras
-- `/events` - Ver eventos activos
-- `/event-join <id>` - Unirse a evento
-- `/help` - Ver ayuda
-
-### Comandos de Admin
-
-- `/admin-add-points @usuario <puntos>` - Añadir puntos
-- `/admin-set-points @usuario <puntos>` - Establecer puntos
-- `/admin-create-role` - Crear rol
-- `/admin-create-item` - Crear item de tienda
-- `/admin-create-event` - Crear evento
-- `/admin-stats` - Ver estadísticas del servidor
-
-## 🗄️ Estructura del Proyecto
-
-```
-botdiscord/
-├── bot/                    # Bot de Discord
-│   ├── cogs/              # Comandos (points, roles, shop, events, admin)
-│   ├── database/          # Modelos y conexión
-│   ├── services/          # Lógica de negocio
-│   ├── tasks/             # Tareas programadas
-│   ├── utils/             # Utilidades
-│   ├── config.py          # Configuración
-│   └── main.py            # Punto de entrada
-├── web/                    # Panel web (próximamente)
-├── data/                   # Base de datos SQLite
-├── backups/                # Backups automáticos
-├── logs/                   # Logs del sistema
-├── .env                    # Variables de entorno
-└── requirements.txt        # Dependencias
-```
-
-## 🔧 Configuración Avanzada
-
-### Configurar Canales de Anuncios
-
-Desde el panel web o directamente en la base de datos:
-
-```sql
-INSERT INTO announcement_config (announcement_type, channel_id, is_enabled)
-VALUES ('level_up', 123456789, 1);
-
-INSERT INTO announcement_config (announcement_type, channel_id, is_enabled)
-VALUES ('purchase', 123456789, 1);
-
-INSERT INTO announcement_config (announcement_type, channel_id, is_enabled)
-VALUES ('event', 123456789, 1);
-```
-
-### Crear Roles Iniciales
-
-```python
-python -c "
-from bot.database.connection import SessionLocal
-from bot.services.role_service import RoleService
-
-db = SessionLocal()
-
-# Rol Bronce
-RoleService.create_role(
-    db, 'Bronce', 123456789, points_required=100, 
-    color='#CD7F32', auto_assign=True
-)
-
-# Rol Plata
-RoleService.create_role(
-    db, 'Plata', 987654321, points_required=500,
-    color='#C0C0C0', auto_assign=True
-)
-
-# Rol Oro
-RoleService.create_role(
-    db, 'Oro', 111222333, points_required=1000,
-    color='#FFD700', auto_assign=True
-)
-
-print('Roles creados')
-db.close()
-"
-```
-
-## 🔒 Seguridad
-
-- **Nunca** compartas tu `.env` o `DISCORD_TOKEN`
-- Cambia `WEB_SECRET_KEY` en producción
-- Activa MFA para usuarios admin del panel web
-- Mantén las dependencias actualizadas: `pip install --upgrade -r requirements.txt`
-
-## 📊 Backups
-
-Los backups se crean automáticamente cada día a las 04:00 AM en la carpeta `backups/`.
-
-### Restaurar un Backup
-
-```python
-python -c "
-from bot.tasks.backup import BackupService
-BackupService.restore_backup('bot_backup_2026-01-03_04-00-00.db.gz')
-"
-```
-
-## 🐛 Troubleshooting
-
-### El bot no se conecta
-
-- Verifica que `DISCORD_TOKEN` sea correcto
-- Asegúrate de que el bot tenga los intents habilitados en Discord Developer Portal:
-  - Message Content Intent
-  - Server Members Intent
-  - Presence Intent
-
-### Los comandos no aparecen
-
-- Espera unos minutos (Discord puede tardar en sincronizar)
-- Verifica que el bot tenga permisos de "applications.commands"
-
-### Error de base de datos
-
+### Create Additional Admin Users
 ```bash
-# Recrear base de datos (CUIDADO: borra todos los datos)
-python -c "from bot.database.connection import drop_all, init_db; drop_all(); init_db()"
+docker exec -it discord_bot python create_admin.py
 ```
 
-## 📚 Documentación Adicional
+### Database Backup
+```bash
+docker exec discord_db pg_dump -U postgres botdiscord > backup_$(date +%Y%m%d).sql
+```
 
-- [Guía de Monitoring](monitoring_guide.md) - Configurar UptimeRobot, Sentry, Healthchecks.io
-- [Plan de Implementación](implementation_plan.md) - Arquitectura y decisiones de diseño
+### Database Restore
+```bash
+cat backup_20260110.sql | docker exec -i discord_db psql -U postgres botdiscord
+```
 
-## 🤝 Contribuir
+## Troubleshooting
 
-1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/nueva-caracteristica`)
-3. Commit tus cambios (`git commit -am 'Añadir nueva característica'`)
-4. Push a la rama (`git push origin feature/nueva-caracteristica`)
-5. Crea un Pull Request
+### Bot won't start
+- Check logs: `docker compose logs bot`
+- Verify Discord token in `.env`
+- Ensure database is running: `docker compose ps`
 
-## 📄 Licencia
+### Can't access web panel
+- Check if port 8010 is open in your firewall
+- Verify web service is running: `docker compose ps`
+- Check logs: `docker compose logs web`
 
-Este proyecto es de código abierto. Úsalo como quieras.
+### Database connection errors
+- Ensure `.env` has correct `DATABASE_URL`
+- Restart services: `docker compose restart`
+- Check database health: `docker exec discord_db pg_isready -U postgres`
 
-## ✨ Créditos
+### After git pull, services won't start
+- Your `.env` file should be preserved
+- If issues persist, run: `docker compose down && docker compose up -d`
+- Check logs for specific errors
 
-Desarrollado con ❤️ usando:
-- [discord.py](https://github.com/Rapptz/discord.py)
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [SQLAlchemy](https://www.sqlalchemy.org/)
-- [APScheduler](https://apscheduler.readthedocs.io/)
+## Project Structure
 
----
+```
+.
+├── bot/                    # Discord bot code
+│   ├── cogs/              # Bot commands and features
+│   ├── database/          # Database models and connection
+│   └── services/          # Business logic
+├── web/                    # Web panel
+│   ├── api/               # API endpoints
+│   ├── templates/         # HTML templates
+│   └── static/            # CSS, JS, images
+├── data/                   # Database and uploads (gitignored)
+├── logs/                   # Application logs (gitignored)
+├── docker-compose.yml      # Docker configuration
+├── Dockerfile              # Docker image definition
+├── requirements.txt        # Python dependencies
+├── init_production.sh      # Initial setup script
+└── deploy.sh              # Update deployment script
+```
 
-**¿Necesitas ayuda?** Abre un issue en GitHub o contacta al desarrollador.
+## Security Notes
+
+- ⚠️ **Never commit `.env` to git** - It contains sensitive credentials
+- 🔒 Change the default admin password after first login
+- 🔐 Use strong, unique passwords for production
+- 🛡️ Keep your Discord bot token secret
+- 🔄 Regularly update dependencies and Docker images
+
+## Support
+
+For issues or questions:
+1. Check the logs: `docker compose logs -f`
+2. Review this README
+3. Check `.env.example` for configuration options
+
+## License
+
+[Your License Here]
