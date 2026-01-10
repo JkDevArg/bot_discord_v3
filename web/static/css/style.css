@@ -1,22 +1,23 @@
-/* HackL4bs Cyber Theme */
+/* HackL4bs Cyber Theme - Professional Edition */
 :root {
     --bg-body: #0b0a14;
     --bg-sidebar: #131120;
-    --bg-surface: rgba(22, 21, 38, 0.7);
-    --bg-surface-hover: rgba(30, 29, 50, 0.8);
+    --bg-surface: rgba(22, 21, 38, 0.85);
+    --bg-surface-hover: rgba(30, 29, 50, 0.9);
 
-    --primary: #7209b7;
-    --primary-gradient: linear-gradient(135deg, #7209b7 0%, #4361ee 100%);
-    --accent: #4cc9f0;
+    --primary: #6a0dad;
+    --primary-gradient: linear-gradient(135deg, #6a0dad 0%, #3d52d5 100%);
+    --accent: #3b9fc9;
 
     --text-main: #ffffff;
-    --text-muted: #94a3b8;
+    --text-muted: #a1aec7;
+    --text-label: #cbd5e1;
 
-    --border-color: rgba(114, 9, 183, 0.3);
-    --neon-shadow: 0 0 10px rgba(114, 9, 183, 0.3);
-    --neon-text: 0 0 5px rgba(76, 201, 240, 0.5);
+    --border-color: rgba(106, 13, 173, 0.25);
+    --neon-shadow: 0 0 8px rgba(106, 13, 173, 0.2);
+    --neon-text: 0 0 3px rgba(59, 159, 201, 0.3);
 
-    --card-radius: 16px;
+    --card-radius: 12px;
 }
 
 body {
@@ -29,15 +30,15 @@ body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Glassmorphism Cards */
+/* Professional Cards */
 .card {
     background: var(--bg-surface);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
     border-radius: var(--card-radius);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card-text-clamp {
@@ -50,19 +51,19 @@ body {
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px 0 rgba(114, 9, 183, 0.2);
-    border-color: rgba(114, 9, 183, 0.6);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px 0 rgba(106, 13, 173, 0.15);
+    border-color: rgba(106, 13, 173, 0.4);
 }
 
 .card-header {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.02);
     border-bottom: 1px solid var(--border-color);
     padding: 1.25rem 1.5rem;
     font-weight: 600;
     color: var(--accent);
-    letter-spacing: 0.05em;
-    text-shadow: var(--neon-text);
+    letter-spacing: 0.03em;
+    text-shadow: none;
 }
 
 /* Sidebar (Desktop & Mobile) */
@@ -127,13 +128,27 @@ body {
     font-size: 1.2rem;
 }
 
-/* Stats (Big Numbers) */
+/* Stats Cards - Professional Style */
 .card-body h3 {
-    font-size: 2.8rem;
-    font-weight: 800;
-    background: linear-gradient(to bottom, #fff, #a5b4fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+/* Stat Card Labels - High Visibility */
+.card-body p.text-muted {
+    color: var(--text-label) !important;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    opacity: 0.95;
+}
+
+/* Stat Card Icons - Subtle Glow */
+.card-body i.fs-1 {
+    opacity: 0.85;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* Tables */
@@ -162,18 +177,19 @@ body {
     --bs-table-accent-bg: rgba(76, 201, 240, 0.03);
 }
 
-/* Buttons */
+/* Buttons - Professional */
 .btn-primary {
     background: var(--primary-gradient);
     border: none;
-    box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
-    transition: all 0.3s ease;
+    box-shadow: 0 3px 12px rgba(61, 82, 213, 0.25);
+    transition: all 0.2s ease;
+    font-weight: 500;
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(67, 97, 238, 0.5);
-    background: linear-gradient(135deg, #8014c2 0%, #5473ff 100%);
+    box-shadow: 0 6px 20px rgba(61, 82, 213, 0.35);
+    background: linear-gradient(135deg, #7a0fc0 0%, #4a5fe8 100%);
 }
 
 .btn-dark-glow {
