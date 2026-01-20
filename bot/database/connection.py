@@ -73,7 +73,7 @@ def init_db():
     
     # Crear todas las tablas
     Base.metadata.create_all(bind=engine)
-    bot_logger.info("Database tables created successfully")
+    print("✓ Base de datos inicializada correctamente")
 
 def drop_all():
     """CUIDADO: Elimina todas las tablas"""
