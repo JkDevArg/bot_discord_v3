@@ -51,12 +51,12 @@ class RateLimiter:
                 del self.requests[identifier]
 
 # Global rate limiter instance
-rate_limiter = RateLimiter(requests_per_minute=60)
+rate_limiter = RateLimiter(requests_per_minute=200)  # Aumentado de 60 a 200
 
 async def rate_limit_middleware(request: Request, call_next):
     """Rate limiting middleware"""
-    # Skip rate limiting for static files
-    if request.url.path.startswith("/static"):
+    # Skip rate limiting for static files and API endpoints
+    if request.url.path.startswith("/static") or request.url.path.startswith("/api"):
         return await call_next(request)
     
     # Get identifier (IP address or user ID from token)
