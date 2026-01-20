@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil de Usuario{% endblock %}
+
+{% block content %}
+<div id="loadingSpinner" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+</div>
+
+<div id="profileContent" style="display: none;">
+    <!-- Header del Perfil -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                    <img id="userAvatar" src="" alt="Avatar" class="rounded-circle"
+                        style="width: 120px; height: 120px;">
+                </div>
+                <div class="col-md-6">
+                    <h2 class="text-white mb-1" id="userName"></h2>
+                    <p class="text-muted mb-2" id="userDiscriminator"></p>
+                    <div class="mb-2">
+                        <span class="badge bg-primary" id="userLevel"></span>
+                        <span class="badge bg-success ms-2" id="userPoints"></span>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div id="expProgress" class="progress-bar bg-info" role="progressbar" style="width: 0%">
+                            <span id="expText"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-warning mb-0" id="currentStreak">0</h4>
+                            <small class="text-light">Racha Actual</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-danger mb-0" id="bestStreak">0</h4>
+                            <small class="text-light">Mejor Racha</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas Generales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-chat-dots fs-1 text-primary"></i>
+                    <h3 class="mt-2 mb-0" id="messageCount">0</h3>
+                    <small class="text-light">Mensajes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-cart-fill fs-1 text-warning"></i>
+                    <h3 class="mt-2 mb-0" id="totalSpent">0</h3>
+                    <small class="text-light">Puntos Gastados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-calendar-event fs-1 text-info"></i>
+                    <h3 class="mt-2 mb-0" id="eventsCompleted">0</h3>
+                    <small class="text-light">Eventos Completados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-clock-history fs-1 text-success"></i>
+                    <h3 class="mt-2 mb-0" id="memberSince">-</h3>
+                    <small class="text-light">Miembro Desde</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Progreso -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-graph-up"></i> Progreso de Nivel (Últimos 30 días)</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="levelProgressChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Tabs: Actividad y Compras -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#activityTab">
+                <i class="bi bi-activity"></i> Actividad Reciente
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#purchasesTab">
+                <i class="bi bi-bag-fill"></i> Historial de Compras
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Tab de Actividad -->
+        <div class="tab-pane fade show active" id="activityTab">
+            <div class="card">
+                <div class="card-body">
+                    <div id="activityTimeline" class="timeline">
+                        <!-- Timeline se cargará aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab de Compras -->
+        <div class="tab-pane fade" id="purchasesTab">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Precio</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchasesTable">
+                                <!-- Compras se cargarán aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const token = localStorage.getItem('token');
+    const userId = {{ user_id }};
+    let levelChart = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadProfile();
+        await loadActivityHistory();
+        await loadPurchases();
+        await loadLevelProgress();
+    });
+
+    async function loadProfile() {
+        try {
+            const response = await fetch(`/api/users/${userId}/profile`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Error cargando perfil');
+
+            const profile = await response.json();
+
+            // Avatar
+            document.getElementById('userAvatar').src = profile.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+            // Nombre y discriminator
+            document.getElementById('userName').textContent = profile.username;
+            document.getElementById('userDiscriminator').textContent = `#${profile.discriminator}`;
+
+            // Nivel y puntos
+            document.getElementById('userLevel').textContent = `Nivel ${profile.level}`;
+            document.getElementById('userPoints').textContent = `${profile.points.toLocaleString()} puntos`;
+
+            // Barra de progreso
+            const expPercent = (profile.exp / profile.exp_needed) * 100;
+            document.getElementById('expProgress').style.width = `${expPercent}%`;
+            document.getElementById('expText').textContent = `${profile.exp} / ${profile.exp_needed} EXP`;
+
+            // Rachas
+            document.getElementById('currentStreak').textContent = profile.current_streak;
+            document.getElementById('bestStreak').textContent = profile.best_streak;
+
+            // Estadísticas
+            document.getElementById('messageCount').textContent = profile.message_count.toLocaleString();
+            document.getElementById('totalSpent').textContent = profile.total_spent.toLocaleString();
+            document.getElementById('eventsCompleted').textContent = profile.events_completed;
+
+            // Fecha de registro
+            const memberDate = new Date(profile.created_at);
+            document.getElementById('memberSince').textContent = memberDate.toLocaleDateString();
+
+            // Mostrar contenido
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('profileContent').style.display = 'block';
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error cargando perfil');
+        }
+    }
+
+    async function loadActivityHistory() {
+        try {
+            const response = await fetch(`/api/users/${userId}/activity-history?limit=50`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Error cargando actividad');
+
+            const activities = await response.json();
+            const timeline = document.getElementById('activityTimeline');
+
+            if (activities.length === 0) {
+                timeline.innerHTML = '<p class="text-muted">No hay actividad reciente</p>';
+                return;
+            }
+
+            timeline.innerHTML = activities.map(activity => {
+                const icon = getActivityIcon(activity.activity_type);
+                const timeAgo = getTimeAgo(new Date(activity.timestamp));
+
+                return `
+                    <div class="timeline-item mb-3">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="bi ${icon} fs-4 text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <p class="mb-0 text-white">${activity.description}</p>
+                                <small class="text-muted">${timeAgo}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function loadPurchases() {
+        try {
+            const response = await fetch(`/api/users/${userId}/purchases`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Error cargando compras');
+
+            const purchases = await response.json();
+            const table = document.getElementById('purchasesTable');
+
+            if (purchases.length === 0) {
+                table.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay compras registradas</td></tr>';
+                return;
+            }
+
+            table.innerHTML = purchases.map(purchase => `
+                <tr>
+                    <td>${purchase.item_name}</td>
+                    <td><span class="badge bg-warning">${purchase.price_paid} pts</span></td>
+                    <td>${new Date(purchase.purchased_at).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function loadLevelProgress() {
+        try {
+            const response = await fetch(`/api/users/${userId}/level-progress?days=30`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Error cargando progreso');
+
+            const progress = await response.json();
+
+            const ctx = document.getElementById('levelProgressChart').getContext('2d');
+            levelChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: progress.map(p => p.date),
+                    datasets: [{
+                        label: 'Nivel',
+                        data: progress.map(p => p.level),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { labels: { color: '#fff' } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#fff', stepSize: 1 },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    function getActivityIcon(type) {
+        const icons = {
+            'level_up': 'bi-arrow-up-circle-fill',
+            'purchase': 'bi-cart-fill',
+            'daily_reward': 'bi-gift-fill',
+            'event': 'bi-calendar-event',
+            'message': 'bi-chat-dots-fill'
+        };
+        return icons[type] || 'bi-circle-fill';
+    }
+
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = {
+            año: 31536000,
+            mes: 2592000,
+            semana: 604800,
+            día: 86400,
+            hora: 3600,
+            minuto: 60
+        };
+
+        for (const [name, value] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / value);
+            if (interval >= 1) {
+                return `Hace ${interval} ${name}${interval > 1 ? 's' : ''}`;
+            }
+        }
+        return 'Hace un momento';
+    }
+</script>
+
+<style>
+    .timeline-item {
+        border-left: 2px solid #0d6efd;
+        padding-left: 1rem;
+    }
+</style>
+{% endblock %}

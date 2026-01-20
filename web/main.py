@@ -94,6 +94,10 @@ app.include_router(rewards_router, prefix="/api")
 from web.api.bot_settings import router as bot_settings_router
 app.include_router(bot_settings_router, prefix="/api")
 
+# Importar router de user profiles
+from web.api.user_profile import router as user_profile_router
+app.include_router(user_profile_router, prefix="/api")
+
 # Importar middleware
 from web.middleware import (
     error_handler_middleware,
@@ -220,6 +224,14 @@ async def bot_settings_page(request: Request, user = Depends(get_current_user_co
     if not user:
         return RedirectResponse(url="/login")
     return templates.TemplateResponse("bot_settings.html", {"request": request, "user": user})
+
+
+@app.get("/users/{user_id}/profile")
+async def user_profile_page(request: Request, user_id: int, user = Depends(get_current_user_cookie)):
+    """Página de perfil de usuario"""
+    if not user:
+        return RedirectResponse(url="/login")
+    return templates.TemplateResponse("user_profile.html", {"request": request, "user": user, "user_id": user_id})
 
 
 

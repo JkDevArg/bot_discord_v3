@@ -280,7 +280,7 @@
         } catch (error) {
             console.error('Error:', error);
             document.getElementById('usersTableBody').innerHTML =
-                '<tr><td colspan="8" class="text-center text-danger">Error cargando usuarios</td></tr>';
+                '<tr><td colspan="9" class="text-center text-danger">Error cargando usuarios</td></tr>';
         }
     }
 
@@ -293,7 +293,7 @@
 
         if (pageUsers.length === 0) {
             document.getElementById('usersTableBody').innerHTML =
-                '<tr><td colspan="8" class="text-center text-muted">No hay usuarios</td></tr>';
+                '<tr><td colspan="9" class="text-center text-muted">No hay usuarios</td></tr>';
             return;
         }
 
@@ -309,6 +309,9 @@
                 <td>${new Date(user.last_activity).toLocaleDateString()}</td>
                 <td>
                     <div class="btn-group" role="group">
+                        <a href="/users/${user.id}/profile" class="btn btn-sm btn-success" title="Ver perfil">
+                            <i class="bi bi-person-circle"></i>
+                        </a>
                         <button class="btn btn-sm btn-primary" onclick="editPoints(${user.id}, '${user.username}', ${user.points})" title="Editar puntos">
                             <i class="bi bi-coin"></i>
                         </button>
