@@ -124,7 +124,10 @@ async def main():
             'bot.cogs.events',
             'bot.cogs.admin',
             'bot.cogs.announcements',
-            'bot.cogs.levels'
+            'bot.cogs.levels',
+            'bot.cogs.daily_rewards',
+            'bot.cogs.auto_moderation',
+            'bot.cogs.scheduled_tasks'
         ]
         
         for cog in cogs_to_load:

@@ -57,7 +57,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "3433:3306"
     networks:
       - bot_network
     healthcheck:

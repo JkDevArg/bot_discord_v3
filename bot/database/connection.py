@@ -67,7 +67,9 @@ def init_db():
     from bot.database.models import (
         User, Role, UserRole, ShopItem, Purchase,
         Event, EventParticipant, AnnouncementConfig,
-        AdminUser, AuditLog, ActivityLog, BackupLog, ItemCategory
+        AdminUser, AuditLog, ActivityLog, BackupLog, ItemCategory,
+        DailyStats, DailyReward, LeaderboardHistory,
+        ModerationConfig, FilteredWord, ModerationLog
     )
     Base.metadata.create_all(bind=engine)
     print("✓ Base de datos inicializada correctamente")

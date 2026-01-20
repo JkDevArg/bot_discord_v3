@@ -81,6 +81,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.url.path == '/moderation' %}active{% endif %}"
+                            href="/moderation">
+                            <i class="bi bi-shield-check"></i> Moderación
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.url.path == '/settings' %}active{% endif %}" href="/settings">
                             <i class="bi bi-gear"></i> Configuración
                         </a>

@@ -326,3 +326,148 @@ class BackupLog(Base):
     
     def __repr__(self):
         return f"<BackupLog {self.backup_path} - {'OK' if self.success else 'FAIL'}>"
+
+
+# ============================================================================
+# NUEVOS MODELOS - FUNCIONALIDADES AVANZADAS
+# ============================================================================
+
+class DailyStats(Base):
+    """Estadísticas diarias para gráficos de actividad"""
+    __tablename__ = "daily_stats"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(DateTime, nullable=False, unique=True, index=True)
+    active_users = Column(Integer, default=0, nullable=False)
+    total_messages = Column(Integer, default=0, nullable=False)
+    points_awarded = Column(Integer, default=0, nullable=False)
+    new_users = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    
+    __table_args__ = (
+        Index('idx_daily_stats_date', 'date'),
+    )
+    
+    def __repr__(self):
+        return f"<DailyStats {self.date.strftime('%Y-%m-%d')} - {self.active_users} users>"
+
+
+class DailyReward(Base):
+    """Sistema de recompensas diarias con streaks"""
+    __tablename__ = "daily_rewards"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    last_claim = Column(DateTime, nullable=False)
+    streak_days = Column(Integer, default=1, nullable=False)
+    total_claims = Column(Integer, default=1, nullable=False)
+    best_streak = Column(Integer, default=1, nullable=False)
+    
+    # Relación
+    user = relationship("User", backref="daily_reward")
+    
+    __table_args__ = (
+        Index('idx_daily_reward_user', 'user_id', unique=True),
+        Index('idx_daily_reward_last_claim', 'last_claim'),
+    )
+    
+    def __repr__(self):
+        return f"<DailyReward user_id={self.user_id} streak={self.streak_days}>"
+
+
+class LeaderboardHistory(Base):
+    """Historial de leaderboards semanales y mensuales"""
+    __tablename__ = "leaderboard_history"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    period_type = Column(String(20), nullable=False)  # weekly, monthly
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    rank = Column(Integer, nullable=False)
+    points = Column(Integer, nullable=False)
+    level = Column(Integer, nullable=False)
+    reward_given = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=func.now())
+    
+    # Relación
+    user = relationship("User", backref="leaderboard_entries")
+    
+    __table_args__ = (
+        Index('idx_leaderboard_period', 'period_type', 'period_start', 'period_end'),
+        Index('idx_leaderboard_rank', 'rank'),
+    )
+    
+    def __repr__(self):
+        return f"<LeaderboardHistory {self.period_type} rank={self.rank} user_id={self.user_id}>"
+
+
+class ModerationConfig(Base):
+    """Configuración de auto-moderación"""
+    __tablename__ = "moderation_config"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    guild_id = Column(BigInteger, nullable=False, unique=True)
+    
+    # Configuración de spam
+    spam_enabled = Column(Boolean, default=True)
+    spam_threshold = Column(Integer, default=5)  # mensajes
+    spam_timeframe = Column(Integer, default=5)  # segundos
+    spam_mute_duration = Column(Integer, default=300)  # segundos
+    
+    # Configuración de filtro de palabras
+    filter_enabled = Column(Boolean, default=True)
+    filter_action = Column(String(20), default="delete")  # delete, mute, warn
+    
+    # Configuración general
+    log_channel_id = Column(BigInteger, nullable=True)
+    mute_role_id = Column(BigInteger, nullable=True)
+    
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    def __repr__(self):
+        return f"<ModerationConfig guild={self.guild_id}>"
+
+
+class FilteredWord(Base):
+    """Palabras filtradas para auto-moderación"""
+    __tablename__ = "filtered_words"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    word = Column(String(100), nullable=False)
+    is_active = Column(Boolean, default=True)
+    severity = Column(String(20), default="medium")  # low, medium, high
+    created_at = Column(DateTime, default=func.now())
+    
+    __table_args__ = (
+        Index('idx_filtered_word', 'word'),
+        Index('idx_filtered_active', 'is_active'),
+    )
+    
+    def __repr__(self):
+        return f"<FilteredWord '{self.word}' severity={self.severity}>"
+
+
+class ModerationLog(Base):
+    """Registro de acciones de auto-moderación"""
+    __tablename__ = "moderation_logs"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, nullable=False)
+    username = Column(String(100))
+    action = Column(String(50), nullable=False)  # mute, delete, warn, kick
+    reason = Column(Text)
+    auto_moderated = Column(Boolean, default=True)
+    message_content = Column(Text, nullable=True)
+    channel_id = Column(BigInteger, nullable=True)
+    created_at = Column(DateTime, default=func.now())
+    
+    __table_args__ = (
+        Index('idx_moderation_user', 'user_id'),
+        Index('idx_moderation_date', 'created_at'),
+        Index('idx_moderation_action', 'action'),
+    )
+    
+    def __repr__(self):
+        return f"<ModerationLog {self.action} user={self.username}>"

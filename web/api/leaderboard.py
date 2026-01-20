@@ -154,3 +154,117 @@ async def get_events_leaderboard(
         return result
     finally:
         db.close()
+
+
+@router.get("/level", response_model=List[LeaderboardEntry])
+async def get_level_leaderboard(
+    limit: int = Query(10, ge=1, le=100),
+    current_user: AdminUser = Depends(get_current_user)
+):
+    """Get top users by level"""
+    db = SessionLocal()
+    try:
+        users = db.query(User).order_by(
+            desc(User.level),
+            desc(User.exp)
+        ).limit(limit).all()
+        
+        result = []
+        for rank, user in enumerate(users, 1):
+            result.append({
+                "rank": rank,
+                "user_id": user.id,
+                "discord_id": user.discord_id,
+                "username": user.username,
+                "discriminator": user.discriminator,
+                "value": user.level,
+                "avatar_url": user.avatar_url
+            })
+        
+        return result
+    finally:
+        db.close()
+
+
+@router.get("/weekly", response_model=List[LeaderboardEntry])
+async def get_weekly_leaderboard(
+    limit: int = Query(10, ge=1, le=100),
+    current_user: AdminUser = Depends(get_current_user)
+):
+    """Get top users by points (last 7 days activity)"""
+    from datetime import datetime, timedelta
+    
+    db = SessionLocal()
+    try:
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        
+        users = db.query(User).filter(
+            User.last_activity >= week_ago
+        ).order_by(desc(User.points)).limit(limit).all()
+        
+        result = []
+        for rank, user in enumerate(users, 1):
+            result.append({
+                "rank": rank,
+                "user_id": user.id,
+                "discord_id": user.discord_id,
+                "username": user.username,
+                "discriminator": user.discriminator,
+                "value": user.points,
+                "avatar_url": user.avatar_url
+            })
+        
+        return result
+    finally:
+        db.close()
+
+
+@router.get("/monthly", response_model=List[LeaderboardEntry])
+async def get_monthly_leaderboard(
+    limit: int = Query(10, ge=1, le=100),
+    current_user: AdminUser = Depends(get_current_user)
+):
+    """Get top users by points (last 30 days activity)"""
+    from datetime import datetime, timedelta
+    
+    db = SessionLocal()
+    try:
+        month_ago = datetime.utcnow() - timedelta(days=30)
+        
+        users = db.query(User).filter(
+            User.last_activity >= month_ago
+        ).order_by(desc(User.points)).limit(limit).all()
+        
+        result = []
+        for rank, user in enumerate(users, 1):
+            result.append({
+                "rank": rank,
+                "user_id": user.id,
+                "discord_id": user.discord_id,
+                "username": user.username,
+                "discriminator": user.discriminator,
+                "value": user.points,
+                "avatar_url": user.avatar_url
+            })
+        
+        return result
+    finally:
+        db.close()
+
+
+@router.get("/level-distribution")
+async def get_level_distribution(current_user: AdminUser = Depends(get_current_user)):
+    """Get distribution of users by level for chart"""
+    db = SessionLocal()
+    try:
+        distribution = db.query(
+            User.level,
+            func.count(User.id).label('count')
+        ).group_by(User.level).order_by(User.level.asc()).all()
+        
+        return [
+            {"level": level, "count": count}
+            for level, count in distribution
+        ]
+    finally:
+        db.close()

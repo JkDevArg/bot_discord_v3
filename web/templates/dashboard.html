@@ -50,6 +50,59 @@
     </div>
 </div>
 
+<!-- Recompensas Diarias -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-gift"></i> Recompensas Diarias
+            </div>
+            <div class="card-body" id="rewards-stats">
+                <div class="text-center text-muted">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Cargando...
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-fire"></i> Top Rachas Activas
+            </div>
+            <div class="card-body">
+                <div id="top-streaks" class="text-white">
+                    Cargando...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de Actividad -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Actividad de Usuarios (Últimos 30 días)
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> Distribución de Niveles
+            </div>
+            <div class="card-body">
+                <canvas id="levelDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Top usuarios -->
 <div class="row">
     <div class="col-md-6 mb-4">
@@ -115,6 +168,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script>
     // Cargar estadísticas
     async function loadStats() {
@@ -167,10 +223,412 @@
         }
     }
 
+    // Cargar stats de rewards
+    async function loadRewardsStats() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/rewards/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error');
+
+            const data = await response.json();
+
+            document.getElementById('rewards-stats').innerHTML = `
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h3 class="text-primary">${data.total_claims_today}</h3>
+                        <small class="text-muted">Claims Hoy</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h3 class="text-success">${data.total_active_streaks}</h3>
+                        <small class="text-muted">Rachas Activas</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-warning">${data.longest_streak}</h3>
+                        <small class="text-muted">Racha Más Larga</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-info">${(data.total_points_distributed / 1000).toFixed(1)}k</h3>
+                        <small class="text-muted">Puntos Distribuidos</small>
+                    </div>
+                </div>
+                <hr>
+                <p class="text-muted mb-0 text-center">
+                    <i class="bi bi-fire"></i> Racha líder: <strong>${data.longest_streak_user}</strong>
+                </p>
+            `;
+        } catch (error) {
+            console.error('Error loading rewards:', error);
+            document.getElementById('rewards-stats').innerHTML = `
+                <p class="text-danger text-center mb-0">Error cargando datos</p>
+            `;
+        }
+    }
+
+    // Cargar top streaks
+    async function loadTopStreaks() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/rewards/top-streaks?limit=5', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error');
+
+            const data = await response.json();
+
+            if (data.length === 0) {
+                document.getElementById('top-streaks').innerHTML = `
+                    <p class="text-muted text-center mb-0">No hay rachas activas</p>
+                `;
+                return;
+            }
+
+            document.getElementById('top-streaks').innerHTML = data.map((user, index) => `
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 ${index < data.length - 1 ? 'border-bottom' : ''}">
+                    <div>
+                        <span class="badge bg-${index === 0 ? 'warning' : index === 1 ? 'secondary' : 'info'} me-2">
+                            ${index + 1}
+                        </span>
+                        <strong>${user.username}</strong>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-danger">
+                            <i class="bi bi-fire"></i> ${user.streak_days} días
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading streaks:', error);
+        }
+    }
+
+    // Cargar gráfico de actividad
+    let activityChart = null;
+    async function loadActivityChart() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/analytics/activity?days=30', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error');
+
+            const data = await response.json();
+
+            const ctx = document.getElementById('activityChart').getContext('2d');
+
+            // Destruir gráfico anterior si existe
+            if (activityChart) {
+                activityChart.destroy();
+            }
+
+            activityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => {
+                        const date = new Date(d.date);
+                        return `${date.getDate()}/${date.getMonth() + 1}`;
+                    }),
+                    datasets: [
+                        {
+                            label: 'Usuarios Activos',
+                            data: data.map(d => d.active_users),
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Mensajes',
+                            data: data.map(d => d.total_messages),
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#aaa'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#aaa'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error loading chart:', error);
+        }
+    }
+
+    // Cargar gráfico de distribución de niveles
+    let levelDistChart = null;
+    async function loadLevelDistribution() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/leaderboard/level-distribution', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error');
+
+            const data = await response.json();
+
+            if (data.length === 0) return;
+
+            const ctx = document.getElementById('levelDistributionChart').getContext('2d');
+
+            // Destruir gráfico anterior si existe
+            if (levelDistChart) {
+                levelDistChart.destroy();
+            }
+
+            // Agrupar niveles en rangos
+            const ranges = {
+                '1-10': 0,
+                '11-20': 0,
+                '21-30': 0,
+                '31-40': 0,
+                '41-50': 0,
+                '51+': 0
+            };
+
+            data.forEach(item => {
+                if (item.level <= 10) ranges['1-10'] += item.count;
+                else if (item.level <= 20) ranges['11-20'] += item.count;
+                else if (item.level <= 30) ranges['21-30'] += item.count;
+                else if (item.level <= 40) ranges['31-40'] += item.count;
+                else if (item.level <= 50) ranges['41-50'] += item.count;
+                else ranges['51+'] += item.count;
+            });
+
+            levelDistChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(ranges),
+                    datasets: [{
+                        data: Object.values(ranges),
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(255, 159, 64, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 99, 132, 0.8)'
+                        ],
+                        borderColor: '#1a1a1a',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#fff',
+                                padding: 10,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.label + ': ' + context.parsed + ' usuarios';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error loading level distribution:', error);
+        }
+    }
+
+    // Cargar roles de Discord (función existente - mantener)
+    async function loadDiscordRoles() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/roles/discord', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const container = document.getElementById('discord-roles-container');
+
+            if (!response.ok) {
+                if (response.status === 503) {
+                    container.innerHTML = `
+                        <div class="col-12 text-center text-warning">
+                            <i class="bi bi-exclamation-triangle fs-3"></i>
+                            <p class="mt-2 mb-0">Bot no disponible. Asegúrate de que el bot esté corriendo.</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Error cargando roles');
+                }
+                return;
+            }
+
+            const roles = await response.json();
+
+            // Actualizar contador
+            document.getElementById('roles-count').textContent = roles.length;
+
+            if (roles.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center text-muted">
+                        <i class="bi bi-info-circle fs-3"></i>
+                        <p class="mt-2 mb-0">No hay roles configurados en Discord</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Mostrar roles
+            container.innerHTML = roles.map(role => `
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle me-3" style="width: 12px; height: 12px; background-color: ${role.color};"></div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0 text-white">${role.name}</h6>
+                                    <small class="text-muted">Posición: ${role.position}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error('Error loading Discord roles:', error);
+            document.getElementById('discord-roles-container').innerHTML = `
+                <div class="col-12 text-center text-danger">
+                    <i class="bi bi-x-circle fs-3"></i>
+                    <p class="mt-2 mb-0">Error cargando roles de Discord</p>
+                </div>
+            `;
+        }
+    }
+
+    // Cargar todo al inicio
+    loadStats();
+    loadRewardsStats();
+    loadTopStreaks();
+    loadActivityChart();
+    loadLevelDistribution();
+    loadDiscordRoles();
+
+    // Recargar periódicamente
+    setInterval(loadStats, 30000);
+    setInterval(loadRewardsStats, 60000);
+    setInterval(loadTopStreaks, 60000);
+    setInterval(loadLevelDistribution, 300000); // Cada 5 minutos
+    setInterval(loadDiscordRoles, 60000);
+</script>
+{% endblock %}
+<script>
+    // Cargar estadísticas
+    async function loadStats() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/users/stats', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
+                throw new Error('Error cargando estadísticas');
+            }
+
+            const data = await response.json();
+
+            // Actualizar estadísticas
+            document.getElementById('total-users').textContent = data.total_users.toLocaleString();
+            document.getElementById('total-points').textContent = data.total_points.toLocaleString();
+            document.getElementById('avg-level').textContent = data.avg_level.toFixed(1);
+            document.getElementById('total-exp').textContent = data.total_exp.toLocaleString();
+
+            // Top usuarios
+            if (data.top_user_by_points) {
+                document.getElementById('top-points-user').innerHTML = `
+                <h4>${data.top_user_by_points.username}</h4>
+                <p class="mb-0">${data.top_user_by_points.points.toLocaleString()} puntos</p>
+            `;
+            }
+
+            if (data.top_user_by_level) {
+                document.getElementById('top-level-user').innerHTML = `
+                <h4>${data.top_user_by_level.username}</h4>
+                <p class="mb-0">Nivel ${data.top_user_by_level.level} (${data.top_user_by_level.exp.toLocaleString()} EXP)</p>
+            `;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
     // Cargar al inicio
     loadStats();
+    loadDiscordRoles();
 
     // Recargar cada 30 segundos
     setInterval(loadStats, 30000);
+    setInterval(loadDiscordRoles, 60000); // Roles cada 60 segundos
 </script>
 {% endblock %}

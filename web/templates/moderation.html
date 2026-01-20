@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}Auto-moderación - Discord Bot Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-white"><i class="bi bi-shield-check"></i> Auto-moderación</h2>
+</div>
+
+<!-- Configuración de Spam -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-gear"></i> Configuración de Detección de Spam
+            </div>
+            <div class="card-body">
+                <form id="spam-config-form">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Habilitado</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="spam_enabled">
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="spam_threshold" class="form-label">Threshold (mensajes)</label>
+                            <input type="number" class="form-control" id="spam_threshold" min="2" max="20" value="5">
+                            <small class="text-muted">Mensajes en el timeframe</small>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="spam_timeframe" class="form-label">Timeframe (segundos)</label>
+                            <input type="number" class="form-control" id="spam_timeframe" min="1" max="60" value="5">
+                            <small class="text-muted">Ventana de tiempo</small>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="spam_mute_duration" class="form-label">Duración Mute (seg)</label>
+                            <input type="number" class="form-control" id="spam_mute_duration" min="60" max="3600"
+                                value="300">
+                            <small class="text-muted">Tiempo de silencio</small>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar Configuración
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuración de Filtro de Palabras -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-filter"></i> Filtro de Palabras
+            </div>
+            <div class="card-body">
+                <form id="filter-config-form" class="mb-3">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Filtro Habilitado</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="filter_enabled">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="filter_action" class="form-label">Acción</label>
+                            <select class="form-select" id="filter_action">
+                                <option value="delete">Solo Eliminar Mensaje</option>
+                                <option value="mute">Eliminar + Mute 10 min</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar Configuración
+                    </button>
+                </form>
+
+                <hr>
+
+                <!-- Agregar palabra -->
+                <div class="mb-3">
+                    <h5>Agregar Palabra Filtrada</h5>
+                    <form id="add-word-form" class="row g-2">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="new_word" placeholder="Palabra a filtrar"
+                                required>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="new_word_severity">
+                                <option value="low">Baja</option>
+                                <option value="medium" selected>Media</option>
+                                <option value="high">Alta</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Lista de palabras -->
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Palabra</th>
+                                <th>Severidad</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="words-table-body">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logs de Moderación -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-list-ul"></i> Logs de Moderación</span>
+                <select class="form-select form-select-sm w-auto" id="log-filter">
+                    <option value="">Todas las acciones</option>
+                    <option value="spam_mute">Spam Mute</option>
+                    <option value="filtered_word">Palabra Filtrada</option>
+                </select>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Usuario</th>
+                                <th>Acción</th>
+                                <th>Razón</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const token = localStorage.getItem('token');
+
+    // Cargar configuración
+    async function loadConfig() {
+        try {
+            const response = await fetch('/api/moderation/config', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error cargando configuración');
+
+            const config = await response.json();
+
+            // Llenar formulario
+            document.getElementById('spam_enabled').checked = config.spam_enabled;
+            document.getElementById('spam_threshold').value = config.spam_threshold;
+            document.getElementById('spam_timeframe').value = config.spam_timeframe;
+            document.getElementById('spam_mute_duration').value = config.spam_mute_duration;
+            document.getElementById('filter_enabled').checked = config.filter_enabled;
+            document.getElementById('filter_action').value = config.filter_action;
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error cargando configuración');
+        }
+    }
+
+    // Guardar configuración de spam
+    document.getElementById('spam-config-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const data = {
+            spam_enabled: document.getElementById('spam_enabled').checked,
+            spam_threshold: parseInt(document.getElementById('spam_threshold').value),
+            spam_timeframe: parseInt(document.getElementById('spam_timeframe').value),
+            spam_mute_duration: parseInt(document.getElementById('spam_mute_duration').value)
+        };
+
+        try {
+            const response = await fetch('/api/moderation/config', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Error guardando');
+
+            alert('✅ Configuración guardada');
+        } catch (error) {
+            alert('❌ Error guardando configuración');
+        }
+    });
+
+    // Guardar configuración de filtro
+    document.getElementById('filter-config-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const data = {
+            filter_enabled: document.getElementById('filter_enabled').checked,
+            filter_action: document.getElementById('filter_action').value
+        };
+
+        try {
+            const response = await fetch('/api/moderation/config', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Error guardando');
+
+            alert('✅ Configuración guardada');
+        } catch (error) {
+            alert('❌ Error guardando configuración');
+        }
+    });
+
+    // Cargar palabras filtradas
+    async function loadWords() {
+        try {
+            const response = await fetch('/api/moderation/filtered-words', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error cargando palabras');
+
+            const words = await response.json();
+            const tbody = document.getElementById('words-table-body');
+
+            if (words.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay palabras filtradas</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = words.map(word => `
+            <tr>
+                <td><code>${word.word}</code></td>
+                <td><span class="badge bg-${word.severity === 'high' ? 'danger' : word.severity === 'medium' ? 'warning' : 'info'}">${word.severity}</span></td>
+                <td>
+                    <span class="badge bg-${word.is_active ? 'success' : 'secondary'}">
+                        ${word.is_active ? 'Activo' : 'Inactivo'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="toggleWord(${word.id})">
+                        <i class="bi bi-toggle-${word.is_active ? 'on' : 'off'}"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteWord(${word.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Agregar palabra
+    document.getElementById('add-word-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const word = document.getElementById('new_word').value.trim();
+        const severity = document.getElementById('new_word_severity').value;
+
+        try {
+            const response = await fetch('/api/moderation/filtered-words', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ word, severity })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail);
+            }
+
+            document.getElementById('new_word').value = '';
+            loadWords();
+            alert('✅ Palabra agregada');
+        } catch (error) {
+            alert('❌ ' + error.message);
+        }
+    });
+
+    // Toggle palabra
+    async function toggleWord(id) {
+        try {
+            const response = await fetch(`/api/moderation/filtered-words/${id}/toggle`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error');
+
+            loadWords();
+        } catch (error) {
+            alert('❌ Error al cambiar estado');
+        }
+    }
+
+    // Eliminar palabra
+    async function deleteWord(id) {
+        if (!confirm('¿Eliminar esta palabra?')) return;
+
+        try {
+            const response = await fetch(`/api/moderation/filtered-words/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error');
+
+            loadWords();
+            alert('✅ Palabra eliminada');
+        } catch (error) {
+            alert('❌ Error al eliminar');
+        }
+    }
+
+    // Cargar logs
+    async function loadLogs(action = '') {
+        try {
+            const url = `/api/moderation/logs?limit=50${action ? `&action=${action}` : ''}`;
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Error cargando logs');
+
+            const logs = await response.json();
+            const tbody = document.getElementById('logs-table-body');
+
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay logs</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(log => `
+            <tr>
+                <td>${new Date(log.created_at).toLocaleString()}</td>
+                <td>${log.username || log.user_id}</td>
+                <td><span class="badge bg-warning">${log.action}</span></td>
+                <td>${log.reason || '-'}</td>
+            </tr>
+        `).join('');
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Filtro de logs
+    document.getElementById('log-filter').addEventListener('change', (e) => {
+        loadLogs(e.target.value);
+    });
+
+    // Cargar todo al inicio
+    loadConfig();
+    loadWords();
+    loadLogs();
+
+    // Recargar cada 30 segundos
+    setInterval(loadLogs, 30000);
+</script>
+{% endblock %}

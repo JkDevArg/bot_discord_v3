@@ -108,6 +108,8 @@ docker exec -it discord_bot python create_admin.py
 docker exec discord_db mysqldump -u root -p botdiscord > backup_$(date +%Y%m%d).sql
 ```
 
+> **Note**: MySQL is accessible on port **3433** externally (mapped to internal port 3306)
+
 ### Database Restore
 ```bash
 cat backup_20260110.sql | docker exec -i discord_db mysql -u root -p botdiscord

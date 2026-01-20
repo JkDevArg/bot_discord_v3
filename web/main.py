@@ -86,6 +86,10 @@ app.include_router(leaderboard_router, prefix="/api")
 from web.api.analytics import router as analytics_router
 app.include_router(analytics_router, prefix="/api")
 
+# Importar router de rewards
+from web.api.rewards import router as rewards_router
+app.include_router(rewards_router, prefix="/api")
+
 # Importar middleware
 from web.middleware import (
     error_handler_middleware,
@@ -196,6 +200,14 @@ async def leaderboard_page(request: Request, user = Depends(get_current_user_coo
     if not user:
         return RedirectResponse(url="/login")
     return templates.TemplateResponse("leaderboard.html", {"request": request, "user": user})
+
+
+@app.get("/moderation")
+async def moderation_page(request: Request, user = Depends(get_current_user_cookie)):
+    """Página de auto-moderación"""
+    if not user:
+        return RedirectResponse(url="/login")
+    return templates.TemplateResponse("moderation.html", {"request": request, "user": user})
 
 
 

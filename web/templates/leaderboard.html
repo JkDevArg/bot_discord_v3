@@ -9,7 +9,22 @@
 <ul class="nav nav-tabs mb-4" id="leaderboardTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="points-tab" data-bs-toggle="tab" data-bs-target="#points" type="button">
-            <i class="bi bi-coin"></i> Puntos
+            <i class="bi bi-coin"></i> Global
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button">
+            <i class="bi bi-calendar-week"></i> Semanal
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button">
+            <i class="bi bi-calendar-month"></i> Mensual
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="level-tab" data-bs-toggle="tab" data-bs-target="#level" type="button">
+            <i class="bi bi-star"></i> Niveles
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -48,6 +63,87 @@
                             </tr>
                         </thead>
                         <tbody id="pointsLeaderboard">
+                            <tr>
+                                <td colspan="3" class="text-center">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Leaderboard -->
+    <div class="tab-pane fade" id="weekly" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-week text-primary"></i> Top Semanal (Últimos 7 días)
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Rank</th>
+                                <th>Usuario</th>
+                                <th class="text-end">Puntos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weeklyLeaderboard">
+                            <tr>
+                                <td colspan="3" class="text-center">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Leaderboard -->
+    <div class="tab-pane fade" id="monthly" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-month text-success"></i> Top Mensual (Últimos 30 días)
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Rank</th>
+                                <th>Usuario</th>
+                                <th class="text-end">Puntos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthlyLeaderboard">
+                            <tr>
+                                <td colspan="3" class="text-center">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level Leaderboard -->
+    <div class="tab-pane fade" id="level" role="tabpanel">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-star-fill text-warning"></i> Top por Nivel
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Rank</th>
+                                <th>Usuario</th>
+                                <th class="text-end">Nivel</th>
+                            </tr>
+                        </thead>
+                        <tbody id="levelLeaderboard">
                             <tr>
                                 <td colspan="3" class="text-center">Cargando...</td>
                             </tr>
@@ -145,6 +241,9 @@
         loadPointsLeaderboard();
 
         // Load other leaderboards when tabs are clicked
+        document.getElementById('weekly-tab').addEventListener('click', loadWeeklyLeaderboard);
+        document.getElementById('monthly-tab').addEventListener('click', loadMonthlyLeaderboard);
+        document.getElementById('level-tab').addEventListener('click', loadLevelLeaderboard);
         document.getElementById('messages-tab').addEventListener('click', loadMessagesLeaderboard);
         document.getElementById('spending-tab').addEventListener('click', loadSpendingLeaderboard);
         document.getElementById('events-tab').addEventListener('click', loadEventsLeaderboard);
@@ -152,6 +251,18 @@
 
     async function loadPointsLeaderboard() {
         await loadLeaderboard('/api/leaderboard/points', 'pointsLeaderboard', 'puntos');
+    }
+
+    async function loadWeeklyLeaderboard() {
+        await loadLeaderboard('/api/leaderboard/weekly', 'weeklyLeaderboard', 'puntos');
+    }
+
+    async function loadMonthlyLeaderboard() {
+        await loadLeaderboard('/api/leaderboard/monthly', 'monthlyLeaderboard', 'puntos');
+    }
+
+    async function loadLevelLeaderboard() {
+        await loadLeaderboard('/api/leaderboard/level', 'levelLeaderboard', 'nivel');
     }
 
     async function loadMessagesLeaderboard() {
