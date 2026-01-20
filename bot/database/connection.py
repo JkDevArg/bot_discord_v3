@@ -39,7 +39,7 @@ if "mysql" in DATABASE_URL:
         cursor = dbapi_conn.cursor()
         # Asegurar modo estricto y configuraciones de seguridad
         cursor.execute("SET SESSION sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'")
-        cursor.execute("SET SESSION innodb_strict_mode=ON")
+        #cursor.execute("SET SESSION innodb_strict_mode=ON")
         cursor.close()
 
 # Crear session factory
