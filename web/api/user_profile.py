@@ -107,7 +107,7 @@ async def get_user_profile(
             exp=user.exp,
             exp_needed=exp_needed,
             points=user.points,
-            message_count=user.message_count,
+            message_count=user.total_messages,
             total_spent=int(total_spent),
             events_completed=events_completed,
             current_streak=current_streak,
@@ -130,16 +130,21 @@ async def get_activity_history(
     try:
         activities = db.query(ActivityLog).filter(
             ActivityLog.user_id == user_id
-        ).order_by(desc(ActivityLog.timestamp)).limit(limit).all()
+        ).order_by(desc(ActivityLog.created_at)).limit(limit).all()
         
         result = []
         for activity in activities:
+            # Crear descripción basada en el tipo de actividad
+            description = f"Actividad: {activity.activity_type}"
+            if activity.points_awarded and activity.points_awarded > 0:
+                description = f"Ganó {activity.points_awarded} puntos por {activity.activity_type}"
+            
             result.append(ActivityHistoryItem(
                 id=activity.id,
                 activity_type=activity.activity_type,
-                description=activity.description or f"Actividad: {activity.activity_type}",
-                timestamp=activity.timestamp,
-                metadata={"details": activity.details} if activity.details else None
+                description=description,
+                timestamp=activity.created_at,
+                metadata={"points": activity.points_awarded} if activity.points_awarded else None
             ))
         
         return result
@@ -182,41 +187,34 @@ async def get_level_progress(
     """Obtener progreso de nivel en los últimos N días"""
     db = SessionLocal()
     try:
+        # Obtener usuario
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return []
+        
         # Obtener actividades de level-up en los últimos N días
         start_date = datetime.utcnow() - timedelta(days=days)
         
         activities = db.query(ActivityLog).filter(
             ActivityLog.user_id == user_id,
             ActivityLog.activity_type == 'level_up',
-            ActivityLog.timestamp >= start_date
-        ).order_by(ActivityLog.timestamp.asc()).all()
+            ActivityLog.created_at >= start_date
+        ).order_by(ActivityLog.created_at.asc()).all()
         
         # Si no hay level-ups, crear datos simulados basados en EXP actual
         if not activities:
-            user = db.query(User).filter(User.id == user_id).first()
-            if user:
-                return [LevelProgressItem(
-                    date=datetime.utcnow().strftime('%Y-%m-%d'),
-                    exp_gained=user.exp,
-                    level=user.level
-                )]
+            return [LevelProgressItem(
+                date=datetime.utcnow().strftime('%Y-%m-%d'),
+                exp_gained=user.exp,
+                level=user.level
+            )]
         
         result = []
         for activity in activities:
-            # Extraer nivel del metadata si existe
-            level = user.level  # Default al nivel actual
-            if activity.details:
-                try:
-                    import json
-                    details = json.loads(activity.details) if isinstance(activity.details, str) else activity.details
-                    level = details.get('level', user.level)
-                except:
-                    pass
-            
             result.append(LevelProgressItem(
-                date=activity.timestamp.strftime('%Y-%m-%d'),
-                exp_gained=100,  # Placeholder, podríamos calcular esto mejor
-                level=level
+                date=activity.created_at.strftime('%Y-%m-%d'),
+                exp_gained=100,  # Placeholder
+                level=user.level
             ))
         
         return result
