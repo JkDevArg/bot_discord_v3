@@ -86,7 +86,7 @@ async def get_user_profile(
         from bot.database.models import EventParticipant
         events_completed = db.query(func.count(EventParticipant.id)).filter(
             EventParticipant.user_id == user_id,
-            EventParticipant.reward_claimed == True
+            EventParticipant.reward_received == True
         ).scalar() or 0
         
         # Rachas de daily rewards
