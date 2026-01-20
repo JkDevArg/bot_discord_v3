@@ -11,13 +11,13 @@ import math
 class LevelService:
     """Servicio para gestionar niveles y experiencia"""
     
-    # Configuración del sistema de niveles
-    BASE_EXP = 100  # EXP base para nivel 2
-    EXP_MULTIPLIER = 1.8  # Multiplicador por nivel (aumentado para más dificultad)
-    EXP_PER_MESSAGE = 15  # EXP por mensaje
+    # Valores por defecto (fallback si no hay config en DB)
+    BASE_EXP = 100
+    EXP_MULTIPLIER = 1.5
+    EXP_PER_MESSAGE = 10
     
     @staticmethod
-    def calculate_exp_for_level(level: int) -> int:
+    def calculate_exp_for_level(level: int, base_exp: int = None, multiplier: float = None) -> int:
         """
         Calcular EXP necesaria para alcanzar un nivel
         
@@ -26,6 +26,8 @@ class LevelService:
         
         Args:
             level: Nivel objetivo
+            base_exp: EXP base (None = usar default)
+            multiplier: Multiplicador (None = usar default)
         
         Returns:
             EXP total necesaria desde nivel 1
@@ -33,10 +35,15 @@ class LevelService:
         if level <= 1:
             return 0
         
+        if base_exp is None:
+            base_exp = LevelService.BASE_EXP
+        if multiplier is None:
+            multiplier = LevelService.EXP_MULTIPLIER
+        
         total_exp = 0
         for lvl in range(2, level + 1):
             # Dificultad progresiva: cada nivel requiere más EXP
-            total_exp += int(LevelService.BASE_EXP * math.pow(lvl - 1, LevelService.EXP_MULTIPLIER))
+            total_exp += int(base_exp * math.pow(lvl - 1, multiplier))
         
         return total_exp
     
@@ -56,18 +63,20 @@ class LevelService:
         return exp_for_next - current_exp
     
     @staticmethod
-    def calculate_level_from_exp(total_exp: int) -> int:
+    def calculate_level_from_exp(total_exp: int, base_exp: int = None, multiplier: float = None) -> int:
         """
         Calcular nivel basado en EXP total
         
         Args:
             total_exp: EXP total acumulada
+            base_exp: EXP base (None = usar default)
+            multiplier: Multiplicador (None = usar default)
         
         Returns:
             Nivel correspondiente
         """
         level = 1
-        while LevelService.calculate_exp_for_level(level + 1) <= total_exp:
+        while LevelService.calculate_exp_for_level(level + 1, base_exp, multiplier) <= total_exp:
             level += 1
         return level
     
@@ -99,13 +108,17 @@ class LevelService:
         Args:
             db: Sesión de base de datos
             user: Usuario
-            exp_amount: Cantidad de EXP (None = usar default)
+            exp_amount: Cantidad de EXP (None = usar config de DB)
         
         Returns:
             Tupla (éxito, exp_otorgada, subió_nivel, nivel_nuevo)
         """
+        # Cargar configuración desde DB
+        from bot.utils.config_helper import ConfigHelper
+        config = ConfigHelper.get_bot_config(db)
+        
         if exp_amount is None:
-            exp_amount = LevelService.EXP_PER_MESSAGE
+            exp_amount = config.level_exp_per_message
         
         old_level = user.level
         
@@ -113,8 +126,12 @@ class LevelService:
         user.exp += exp_amount
         user.total_exp_earned += exp_amount
         
-        # Calcular nuevo nivel
-        new_level = LevelService.calculate_level_from_exp(user.exp)
+        # Calcular nuevo nivel usando config de DB
+        new_level = LevelService.calculate_level_from_exp(
+            user.exp,
+            base_exp=config.level_base_exp,
+            multiplier=config.level_exp_multiplier
+        )
         leveled_up = new_level > old_level
         
         if leveled_up:

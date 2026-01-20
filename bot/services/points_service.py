@@ -71,6 +71,10 @@ class PointsService:
         Returns:
             Tupla (puede_ganar, razón)
         """
+        # Cargar configuración desde DB
+        from bot.utils.config_helper import ConfigHelper
+        bot_config = ConfigHelper.get_bot_config(db)
+        
         now = datetime.utcnow()
         
         # Verificar cooldown (último mensaje)
@@ -81,8 +85,9 @@ class PointsService:
         
         if last_activity:
             time_since_last = (now - last_activity.created_at).total_seconds()
-            if time_since_last < MESSAGE_COOLDOWN:
-                remaining = int(MESSAGE_COOLDOWN - time_since_last)
+            cooldown = bot_config.level_cooldown_seconds
+            if time_since_last < cooldown:
+                remaining = int(cooldown - time_since_last)
                 return False, f"Cooldown activo. Espera {remaining}s"
         
         # Verificar límite por hora
@@ -145,15 +150,20 @@ class PointsService:
         if not can_earn:
             return False, 0, reason
         
+        # Cargar configuración desde DB
+        from bot.utils.config_helper import ConfigHelper
+        bot_config = ConfigHelper.get_bot_config(db)
+        
         # Calcular puntos (con variación aleatoria)
         if points_override is not None:
             points = points_override
         else:
-            # Variación de ±20% sobre POINTS_PER_MESSAGE
-            variation = int(POINTS_PER_MESSAGE * 0.2)
+            # Variación de ±20% sobre points_per_message de la config
+            base_points = bot_config.level_points_per_message
+            variation = int(base_points * 0.2)
             points = random.randint(
-                POINTS_PER_MESSAGE - variation,
-                POINTS_PER_MESSAGE + variation
+                base_points - variation,
+                base_points + variation
             )
         
         # Actualizar usuario
