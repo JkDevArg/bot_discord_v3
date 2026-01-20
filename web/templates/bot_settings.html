@@ -19,35 +19,35 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Recompensa Base</label>
+                    <label class="form-label text-white">Recompensa Base</label>
                     <input type="number" class="form-control" id="daily_base_reward" min="1" max="10000" required>
-                    <small class="text-muted">Puntos base al usar /daily</small>
+                    <small class="text-light">Puntos base al usar /daily</small>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Bonus por Día de Racha</label>
+                    <label class="form-label text-white">Bonus por Día de Racha</label>
                     <input type="number" class="form-control" id="daily_streak_bonus_per_day" min="0" max="1000"
                         required>
-                    <small class="text-muted">+X puntos por cada día consecutivo</small>
+                    <small class="text-light">+X puntos por cada día consecutivo</small>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Bonus Máximo de Racha</label>
+                    <label class="form-label text-white">Bonus Máximo de Racha</label>
                     <input type="number" class="form-control" id="daily_max_streak_bonus" min="0" max="10000" required>
-                    <small class="text-muted">Límite de bonus acumulado</small>
+                    <small class="text-light">Límite de bonus acumulado</small>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Bonus Día 7</label>
+                    <label class="form-label text-white">Bonus Día 7</label>
                     <input type="number" class="form-control" id="daily_week_bonus" min="0" max="10000" required>
-                    <small class="text-muted">Bonus especial semanal</small>
+                    <small class="text-light">Bonus especial semanal</small>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Bonus Día 30</label>
+                    <label class="form-label text-white">Bonus Día 30</label>
                     <input type="number" class="form-control" id="daily_month_bonus" min="0" max="50000" required>
-                    <small class="text-muted">Bonus especial mensual</small>
+                    <small class="text-light">Bonus especial mensual</small>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Cooldown (horas)</label>
+                    <label class="form-label text-white">Cooldown (horas)</label>
                     <input type="number" class="form-control" id="daily_cooldown_hours" min="1" max="48" required>
-                    <small class="text-muted">Tiempo entre /daily</small>
+                    <small class="text-light">Tiempo entre /daily</small>
                 </div>
             </div>
         </div>
@@ -61,30 +61,30 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">EXP Base (Nivel 1)</label>
+                    <label class="form-label text-white">EXP Base (Nivel 1)</label>
                     <input type="number" class="form-control" id="level_base_exp" min="10" max="10000" required>
-                    <small class="text-muted">EXP para alcanzar nivel 1</small>
+                    <small class="text-light">EXP para alcanzar nivel 1</small>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Multiplicador de EXP</label>
+                    <label class="form-label text-white">Multiplicador de EXP</label>
                     <input type="number" step="0.1" class="form-control" id="level_exp_multiplier" min="1.0" max="5.0"
                         required>
-                    <small class="text-muted">Incremento por nivel (ej: 1.5)</small>
+                    <small class="text-light">Incremento por nivel (ej: 1.5)</small>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">EXP por Mensaje</label>
+                    <label class="form-label text-white">EXP por Mensaje</label>
                     <input type="number" class="form-control" id="level_exp_per_message" min="1" max="1000" required>
-                    <small class="text-muted">EXP ganada por mensaje</small>
+                    <small class="text-light">EXP ganada por mensaje</small>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Puntos por Mensaje</label>
+                    <label class="form-label text-white">Puntos por Mensaje</label>
                     <input type="number" class="form-control" id="level_points_per_message" min="0" max="100" required>
-                    <small class="text-muted">Puntos ganados por mensaje</small>
+                    <small class="text-light">Puntos ganados por mensaje</small>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Cooldown (segundos)</label>
+                    <label class="form-label text-white">Cooldown (segundos)</label>
                     <input type="number" class="form-control" id="level_cooldown_seconds" min="0" max="3600" required>
-                    <small class="text-muted">Tiempo entre mensajes que dan EXP</small>
+                    <small class="text-light">Tiempo entre mensajes que dan EXP</small>
                 </div>
             </div>
         </div>
@@ -100,13 +100,13 @@
                 <div class="card-body">
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" id="shop_enabled">
-                        <label class="form-check-label">Tienda Habilitada</label>
+                        <label class="form-check-label text-white">Tienda Habilitada</label>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tasa de Impuesto</label>
+                        <label class="form-label text-white">Tasa de Impuesto</label>
                         <input type="number" step="0.01" class="form-control" id="shop_tax_rate" min="0" max="1"
                             required>
-                        <small class="text-muted">0.0 = sin impuesto, 0.1 = 10%</small>
+                        <small class="text-light">0.0 = sin impuesto, 0.1 = 10%</small>
                     </div>
                 </div>
             </div>
@@ -118,16 +118,16 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Recompensa por Participación</label>
+                        <label class="form-label text-white">Recompensa por Participación</label>
                         <input type="number" class="form-control" id="event_participation_reward" min="0" max="10000"
                             required>
-                        <small class="text-muted">Puntos por participar</small>
+                        <small class="text-light">Puntos por participar</small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Recompensa por Completar</label>
+                        <label class="form-label text-white">Recompensa por Completar</label>
                         <input type="number" class="form-control" id="event_completion_reward" min="0" max="10000"
                             required>
-                        <small class="text-muted">Puntos por completar</small>
+                        <small class="text-light">Puntos por completar</small>
                     </div>
                 </div>
             </div>
@@ -142,14 +142,14 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Prefijo de Comandos</label>
+                    <label class="form-label text-white">Prefijo de Comandos</label>
                     <input type="text" class="form-control" id="prefix" maxlength="5" required>
-                    <small class="text-muted">Prefijo para comandos (ej: !)</small>
+                    <small class="text-light">Prefijo para comandos (ej: !)</small>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Mensaje de Bienvenida</label>
+                    <label class="form-label text-white">Mensaje de Bienvenida</label>
                     <textarea class="form-control" id="welcome_message" rows="2"></textarea>
-                    <small class="text-muted">Mensaje al unirse nuevos miembros</small>
+                    <small class="text-light">Mensaje al unirse nuevos miembros</small>
                 </div>
             </div>
         </div>
