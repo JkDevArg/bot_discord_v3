@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración del Bot{% endblock %}
+
+{% block content %}
+<h2 class="text-white mb-4"><i class="bi bi-gear-fill"></i> Configuración del Bot</h2>
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Aquí puedes modificar todos los parámetros del bot. Los cambios se aplicarán
+    inmediatamente.
+</div>
+
+<form id="configForm">
+    <!-- Daily Rewards -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary">
+            <h5 class="mb-0"><i class="bi bi-gift"></i> Recompensas Diarias (/daily)</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Recompensa Base</label>
+                    <input type="number" class="form-control" id="daily_base_reward" min="1" max="10000" required>
+                    <small class="text-muted">Puntos base al usar /daily</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Bonus por Día de Racha</label>
+                    <input type="number" class="form-control" id="daily_streak_bonus_per_day" min="0" max="1000"
+                        required>
+                    <small class="text-muted">+X puntos por cada día consecutivo</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Bonus Máximo de Racha</label>
+                    <input type="number" class="form-control" id="daily_max_streak_bonus" min="0" max="10000" required>
+                    <small class="text-muted">Límite de bonus acumulado</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Bonus Día 7</label>
+                    <input type="number" class="form-control" id="daily_week_bonus" min="0" max="10000" required>
+                    <small class="text-muted">Bonus especial semanal</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Bonus Día 30</label>
+                    <input type="number" class="form-control" id="daily_month_bonus" min="0" max="50000" required>
+                    <small class="text-muted">Bonus especial mensual</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Cooldown (horas)</label>
+                    <input type="number" class="form-control" id="daily_cooldown_hours" min="1" max="48" required>
+                    <small class="text-muted">Tiempo entre /daily</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level System -->
+    <div class="card mb-4">
+        <div class="card-header bg-success">
+            <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Sistema de Niveles</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">EXP Base (Nivel 1)</label>
+                    <input type="number" class="form-control" id="level_base_exp" min="10" max="10000" required>
+                    <small class="text-muted">EXP para alcanzar nivel 1</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Multiplicador de EXP</label>
+                    <input type="number" step="0.1" class="form-control" id="level_exp_multiplier" min="1.0" max="5.0"
+                        required>
+                    <small class="text-muted">Incremento por nivel (ej: 1.5)</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">EXP por Mensaje</label>
+                    <input type="number" class="form-control" id="level_exp_per_message" min="1" max="1000" required>
+                    <small class="text-muted">EXP ganada por mensaje</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Puntos por Mensaje</label>
+                    <input type="number" class="form-control" id="level_points_per_message" min="0" max="100" required>
+                    <small class="text-muted">Puntos ganados por mensaje</small>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Cooldown (segundos)</label>
+                    <input type="number" class="form-control" id="level_cooldown_seconds" min="0" max="3600" required>
+                    <small class="text-muted">Tiempo entre mensajes que dan EXP</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop & Events -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-shop"></i> Tienda</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="shop_enabled">
+                        <label class="form-check-label">Tienda Habilitada</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tasa de Impuesto</label>
+                        <input type="number" step="0.01" class="form-control" id="shop_tax_rate" min="0" max="1"
+                            required>
+                        <small class="text-muted">0.0 = sin impuesto, 0.1 = 10%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-info">
+                    <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Eventos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Recompensa por Participación</label>
+                        <input type="number" class="form-control" id="event_participation_reward" min="0" max="10000"
+                            required>
+                        <small class="text-muted">Puntos por participar</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Recompensa por Completar</label>
+                        <input type="number" class="form-control" id="event_completion_reward" min="0" max="10000"
+                            required>
+                        <small class="text-muted">Puntos por completar</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- General -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary">
+            <h5 class="mb-0"><i class="bi bi-gear"></i> General</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Prefijo de Comandos</label>
+                    <input type="text" class="form-control" id="prefix" maxlength="5" required>
+                    <small class="text-muted">Prefijo para comandos (ej: !)</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Mensaje de Bienvenida</label>
+                    <textarea class="form-control" id="welcome_message" rows="2"></textarea>
+                    <small class="text-muted">Mensaje al unirse nuevos miembros</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-warning" onclick="resetConfig()">
+            <i class="bi bi-arrow-counterclockwise"></i> Restaurar Valores por Defecto
+        </button>
+        <div>
+            <button type="button" class="btn btn-secondary me-2" onclick="loadConfig()">
+                <i class="bi bi-arrow-clockwise"></i> Recargar
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Guardar Configuración
+            </button>
+        </div>
+    </div>
+</form>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">✓ Configuración guardada correctamente</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="errorMessage">Error al guardar</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const token = localStorage.getItem('token');
+
+    document.addEventListener('DOMContentLoaded', loadConfig);
+
+    async function loadConfig() {
+        try {
+            const response = await fetch('/api/bot-settings', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Error cargando configuración');
+            const config = await response.json();
+
+            document.getElementById('daily_base_reward').value = config.daily_base_reward;
+            document.getElementById('daily_max_streak_bonus').value = config.daily_max_streak_bonus;
+            document.getElementById('daily_streak_bonus_per_day').value = config.daily_streak_bonus_per_day;
+            document.getElementById('daily_week_bonus').value = config.daily_week_bonus;
+            document.getElementById('daily_month_bonus').value = config.daily_month_bonus;
+            document.getElementById('daily_cooldown_hours').value = config.daily_cooldown_hours;
+            document.getElementById('level_base_exp').value = config.level_base_exp;
+            document.getElementById('level_exp_multiplier').value = config.level_exp_multiplier;
+            document.getElementById('level_points_per_message').value = config.level_points_per_message;
+            document.getElementById('level_exp_per_message').value = config.level_exp_per_message;
+            document.getElementById('level_cooldown_seconds').value = config.level_cooldown_seconds;
+            document.getElementById('shop_enabled').checked = config.shop_enabled;
+            document.getElementById('shop_tax_rate').value = config.shop_tax_rate;
+            document.getElementById('event_participation_reward').value = config.event_participation_reward;
+            document.getElementById('event_completion_reward').value = config.event_completion_reward;
+            document.getElementById('prefix').value = config.prefix;
+            document.getElementById('welcome_message').value = config.welcome_message || '';
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Error cargando configuración');
+        }
+    }
+
+    document.getElementById('configForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const config = {
+            daily_base_reward: parseInt(document.getElementById('daily_base_reward').value),
+            daily_max_streak_bonus: parseInt(document.getElementById('daily_max_streak_bonus').value),
+            daily_streak_bonus_per_day: parseInt(document.getElementById('daily_streak_bonus_per_day').value),
+            daily_week_bonus: parseInt(document.getElementById('daily_week_bonus').value),
+            daily_month_bonus: parseInt(document.getElementById('daily_month_bonus').value),
+            daily_cooldown_hours: parseInt(document.getElementById('daily_cooldown_hours').value),
+            level_base_exp: parseInt(document.getElementById('level_base_exp').value),
+            level_exp_multiplier: parseFloat(document.getElementById('level_exp_multiplier').value),
+            level_points_per_message: parseInt(document.getElementById('level_points_per_message').value),
+            level_exp_per_message: parseInt(document.getElementById('level_exp_per_message').value),
+            level_cooldown_seconds: parseInt(document.getElementById('level_cooldown_seconds').value),
+            shop_enabled: document.getElementById('shop_enabled').checked,
+            shop_tax_rate: parseFloat(document.getElementById('shop_tax_rate').value),
+            event_participation_reward: parseInt(document.getElementById('event_participation_reward').value),
+            event_completion_reward: parseInt(document.getElementById('event_completion_reward').value),
+            prefix: document.getElementById('prefix').value,
+            welcome_message: document.getElementById('welcome_message').value || null
+        };
+
+        try {
+            const response = await fetch('/api/bot-settings', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(config)
+            });
+            if (!response.ok) throw new Error('Error guardando');
+            showSuccess();
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Error al guardar la configuración');
+        }
+    });
+
+    async function resetConfig() {
+        if (!confirm('¿Restaurar valores por defecto? Esta acción no se puede deshacer.')) return;
+        try {
+            const response = await fetch('/api/bot-settings/reset', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Error');
+            showSuccess();
+            setTimeout(() => loadConfig(), 1000);
+        } catch (error) {
+            showError('Error al resetear');
+        }
+    }
+
+    function showSuccess() {
+        new bootstrap.Toast(document.getElementById('successToast')).show();
+    }
+
+    function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        new bootstrap.Toast(document.getElementById('errorToast')).show();
+    }
+</script>
+{% endblock %}

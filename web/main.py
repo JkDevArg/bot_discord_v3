@@ -214,6 +214,14 @@ async def moderation_page(request: Request, user = Depends(get_current_user_cook
     return templates.TemplateResponse("moderation.html", {"request": request, "user": user})
 
 
+@app.get("/bot-settings")
+async def bot_settings_page(request: Request, user = Depends(get_current_user_cookie)):
+    """Página de configuración del bot"""
+    if not user:
+        return RedirectResponse(url="/login")
+    return templates.TemplateResponse("bot_settings.html", {"request": request, "user": user})
+
+
 
 @app.get("/test-log")
 async def test_log_page(request: Request):

@@ -83,7 +83,13 @@
                     <li class="nav-item">
                         <a class="nav-link {% if request.url.path == '/moderation' %}active{% endif %}"
                             href="/moderation">
-                            <i class="bi bi-shield-check"></i> Moderación
+                            <i class="bi bi-shield-exclamation"></i> Moderación
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.url.path == '/bot-settings' %}active{% endif %}"
+                            href="/bot-settings">
+                            <i class="bi bi-sliders"></i> Config. Bot
                         </a>
                     </li>
                     <li class="nav-item">
