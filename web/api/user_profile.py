@@ -66,8 +66,16 @@ async def get_user_profile(
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         
         # Calcular EXP necesaria para siguiente nivel
-        from bot.cogs.levels import calculate_exp_for_level
-        exp_needed = calculate_exp_for_level(user.level + 1)
+        from bot.services.level_service import LevelService
+        from bot.utils.config_helper import ConfigHelper
+        
+        # Cargar config para calcular EXP correctamente
+        config = ConfigHelper.get_bot_config(db)
+        exp_needed = LevelService.calculate_exp_for_level(
+            user.level + 1,
+            base_exp=config.level_base_exp,
+            multiplier=config.level_exp_multiplier
+        )
         
         # Total gastado en tienda
         total_spent = db.query(func.sum(Purchase.price_paid)).filter(
