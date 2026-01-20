@@ -90,6 +90,10 @@ app.include_router(analytics_router, prefix="/api")
 from web.api.rewards import router as rewards_router
 app.include_router(rewards_router, prefix="/api")
 
+# Importar router de bot settings
+from web.api.bot_settings import router as bot_settings_router
+app.include_router(bot_settings_router, prefix="/api")
+
 # Importar middleware
 from web.middleware import (
     error_handler_middleware,

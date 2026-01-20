@@ -63,16 +63,17 @@ def get_db():
         db.close()
 
 def init_db():
-    """Inicializar base de datos creando todas las tablas"""
+    # Importar todos los modelos para que SQLAlchemy los reconozca
     from bot.database.models import (
-        User, Role, UserRole, ShopItem, Purchase,
-        Event, EventParticipant, AnnouncementConfig,
-        AdminUser, AuditLog, ActivityLog, BackupLog, ItemCategory,
+        User, Role, ShopItem, Purchase, Event, EventParticipant,
+        AdminUser, ItemCategory, ActivityLog,
         DailyStats, DailyReward, LeaderboardHistory,
-        ModerationConfig, FilteredWord, ModerationLog
+        ModerationConfig, FilteredWord, ModerationLog, BotConfig
     )
+    
+    # Crear todas las tablas
     Base.metadata.create_all(bind=engine)
-    print("✓ Base de datos inicializada correctamente")
+    bot_logger.info("Database tables created successfully")
 
 def drop_all():
     """CUIDADO: Elimina todas las tablas"""

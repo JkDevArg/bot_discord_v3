@@ -309,10 +309,6 @@ class ActivityLog(Base):
         return f"<ActivityLog user_id={self.user_id} type={self.activity_type}>"
 
 
-class BackupLog(Base):
-    """Registro de backups realizados"""
-    __tablename__ = "backup_log"
-    
     id = Column(Integer, primary_key=True, autoincrement=True)
     backup_path = Column(String(500), nullable=False)
     file_size = Column(BigInteger)  # Bytes
