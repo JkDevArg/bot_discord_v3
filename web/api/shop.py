@@ -2,11 +2,12 @@
 API endpoints para gestión de tienda
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import List, Optional
 from bot.database.connection import SessionLocal
 from bot.database.models import ShopItem
 from web.auth import get_current_user, AdminUser
+from bot.utils.sanitization import sanitize_string, sanitize_url, sanitize_integer
 import os
 import uuid
 from datetime import datetime
@@ -16,8 +17,18 @@ router = APIRouter(prefix="/shop", tags=["Shop"])
 
 class CategoryBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
-    icon: Optional[str] = None
+    icon: Optional[str] = Field(None, max_length=50)
     is_active: bool = True
+    
+    @validator('name')
+    def validate_name(cls, v):
+        return sanitize_string(v, max_length=50)
+    
+    @validator('icon')
+    def validate_icon(cls, v):
+        if v:
+            return sanitize_string(v, max_length=50)
+        return v
 
 class CategoryCreate(CategoryBase):
     pass
@@ -31,13 +42,39 @@ class CategoryResponse(CategoryBase):
 
 class ShopItemBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = None
-    price: int = Field(..., gt=0)
+    description: Optional[str] = Field(None, max_length=500)
+    price: int = Field(..., gt=0, le=1000000)
     item_type: str = Field(..., pattern="^(role|benefit|custom)$")
-    stock: int = -1
-    image_url: Optional[str] = None
+    stock: int = Field(default=-1, ge=-1)
+    image_url: Optional[str] = Field(None, max_length=2000)
     is_active: bool = True
-    category_id: Optional[int] = None  # New field
+    category_id: Optional[int] = None
+    
+    @validator('name')
+    def validate_name(cls, v):
+        return sanitize_string(v, max_length=100)
+    
+    @validator('description')
+    def validate_description(cls, v):
+        if v:
+            return sanitize_string(v, max_length=500)
+        return v
+    
+    @validator('image_url')
+    def validate_image_url(cls, v):
+        if v:
+            sanitized = sanitize_url(v)
+            if sanitized is None:
+                raise ValueError('URL de imagen inválida')
+            return sanitized
+        return v
+    
+    @validator('price')
+    def validate_price(cls, v):
+        sanitized = sanitize_integer(v, min_value=1, max_value=1000000)
+        if sanitized is None:
+            raise ValueError('Precio inválido')
+        return sanitized
 
 class ShopItemCreate(ShopItemBase):
     pass
@@ -52,15 +89,45 @@ class ShopItemResponse(ShopItemBase):
 
 
 class ShopItemUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    image_url: Optional[str] = None
-    price: Optional[int] = None
-    item_type: Optional[str] = None
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+    image_url: Optional[str] = Field(None, max_length=2000)
+    price: Optional[int] = Field(None, gt=0, le=1000000)
+    item_type: Optional[str] = Field(None, pattern="^(role|benefit|custom)$")
     discord_role_id: Optional[int] = None
-    stock: Optional[int] = None
+    stock: Optional[int] = Field(None, ge=-1)
     is_active: Optional[bool] = None
     category_id: Optional[int] = None
+    
+    @validator('name')
+    def validate_name(cls, v):
+        if v:
+            return sanitize_string(v, max_length=100)
+        return v
+    
+    @validator('description')
+    def validate_description(cls, v):
+        if v:
+            return sanitize_string(v, max_length=500)
+        return v
+    
+    @validator('image_url')
+    def validate_image_url(cls, v):
+        if v:
+            sanitized = sanitize_url(v)
+            if sanitized is None:
+                raise ValueError('URL de imagen inválida')
+            return sanitized
+        return v
+    
+    @validator('price')
+    def validate_price(cls, v):
+        if v is not None:
+            sanitized = sanitize_integer(v, min_value=1, max_value=1000000)
+            if sanitized is None:
+                raise ValueError('Precio inválido')
+            return sanitized
+        return v
 
 
 class ShopItemResponse(BaseModel):
@@ -298,6 +365,22 @@ async def upload_item_image(
         raise HTTPException(
             status_code=400,
             detail="Tipo de archivo no permitido. Solo se permiten imágenes (JPEG, PNG, GIF, WebP)"
+        )
+    
+    # Validar tamaño de archivo (máximo 5MB)
+    max_size = 5 * 1024 * 1024  # 5MB
+    contents = await file.read()
+    if len(contents) > max_size:
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo es demasiado grande. Tamaño máximo: 5MB"
+        )
+    
+    # Validar nombre de archivo
+    if not file.filename or len(file.filename) > 255:
+        raise HTTPException(
+            status_code=400,
+            detail="Nombre de archivo inválido"
         )
     
     # Crear directorio si no existe

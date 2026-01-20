@@ -21,7 +21,7 @@ A feature-rich Discord bot with points system, shop, events, and a modern web ad
 - Your Discord server (guild) ID
 - Your Discord user ID (for admin access)
 
-### Initial Setup
+### Automated Installation
 
 1. **Clone the repository**
    ```bash
@@ -29,38 +29,34 @@ A feature-rich Discord bot with points system, shop, events, and a modern web ad
    cd /opt/bot_discord
    ```
 
-2. **Run the initialization script**
+2. **Run the automated installation script**
    ```bash
-   chmod +x init_production.sh
-   ./init_production.sh
+   chmod +x install.sh
+   ./install.sh
    ```
 
-   This script will:
-   - Create your `.env` file with your Discord credentials
-   - Generate a secure secret key
-   - Build and start Docker containers
-   - Initialize the database
-   - Create your admin user
+   The script will automatically:
+   - Prompt for your Discord credentials (token, guild ID, admin user ID)
+   - Generate secure MySQL passwords automatically
+   - Generate secure web panel secret key
+   - Create and configure `.env` file
+   - Build and start Docker containers with MySQL
+   - Initialize the database with all tables
+   - Create your admin user account
+   - Save all credentials to `.credentials.txt`
 
 3. **Access the web panel**
+   - The script will display the URL and credentials
    - URL: `http://your-server-ip:8010`
-   - Login with the credentials you created
+   - Login with the generated admin credentials
+   - **IMPORTANT**: Delete `.credentials.txt` after saving passwords securely!
 
-### Deploying Updates
+### Security Notes
 
-When you want to update the bot with new code:
-
-```bash
-cd /opt/bot_discord
-./deploy.sh
-```
-
-This will:
-- Pull the latest changes from git
-- Rebuild the Docker images
-- Restart the services
-
-**Important**: Your `.env` file and database are preserved during updates.
+- All passwords are auto-generated with 24 characters (letters, numbers, symbols)
+- Credentials are saved to `.credentials.txt` - **DELETE THIS FILE** after saving securely
+- Change your admin password after first login
+- Never commit `.env` or `.credentials.txt` to git
 
 ## Environment Variables
 
@@ -71,7 +67,7 @@ All configuration is done through the `.env` file. See `.env.example` for all av
 - `DISCORD_TOKEN`: Your bot token
 - `DISCORD_GUILD_ID`: Your server ID
 - `ADMIN_USER_IDS`: Your Discord user ID
-- `DATABASE_URL`: PostgreSQL connection string (auto-configured for Docker)
+- `DATABASE_URL`: MySQL connection string (auto-configured for Docker)
 - `WEB_SECRET_KEY`: Secret key for web panel (auto-generated)
 
 ### Optional Variables
@@ -109,12 +105,12 @@ docker exec -it discord_bot python create_admin.py
 
 ### Database Backup
 ```bash
-docker exec discord_db pg_dump -U postgres botdiscord > backup_$(date +%Y%m%d).sql
+docker exec discord_db mysqldump -u root -p botdiscord > backup_$(date +%Y%m%d).sql
 ```
 
 ### Database Restore
 ```bash
-cat backup_20260110.sql | docker exec -i discord_db psql -U postgres botdiscord
+cat backup_20260110.sql | docker exec -i discord_db mysql -u root -p botdiscord
 ```
 
 ## Troubleshooting
@@ -132,7 +128,7 @@ cat backup_20260110.sql | docker exec -i discord_db psql -U postgres botdiscord
 ### Database connection errors
 - Ensure `.env` has correct `DATABASE_URL`
 - Restart services: `docker compose restart`
-- Check database health: `docker exec discord_db pg_isready -U postgres`
+- Check database health: `docker exec discord_db mysqladmin ping -h localhost -u root -p`
 
 ### After git pull, services won't start
 - Your `.env` file should be preserved

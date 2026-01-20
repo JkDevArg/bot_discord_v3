@@ -2,7 +2,7 @@
 Endpoints de gestión de usuarios
 """
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 from typing import List, Optional
 from bot.database.connection import SessionLocal
 from bot.database.models import AdminUser, User
@@ -10,6 +10,7 @@ from bot.services.points_service import PointsService
 from bot.services.level_service import LevelService
 from web.auth import get_current_user
 from sqlalchemy import func
+from bot.utils.sanitization import sanitize_integer
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -122,7 +123,14 @@ async def get_user(user_id: int, current_user: AdminUser = Depends(get_current_u
 
 
 class UpdatePointsRequest(BaseModel):
-    points: int
+    points: int = Field(..., ge=0, le=1000000, description="Puntos del usuario (0-1,000,000)")
+    
+    @validator('points')
+    def validate_points(cls, v):
+        sanitized = sanitize_integer(v, min_value=0, max_value=1000000)
+        if sanitized is None:
+            raise ValueError('Puntos inválidos')
+        return sanitized
 
 
 @router.put("/{user_id}/points")
@@ -161,7 +169,14 @@ async def update_user_points(
 
 
 class UpdateLevelRequest(BaseModel):
-    level: int
+    level: int = Field(..., ge=1, le=100, description="Nivel del usuario (1-100)")
+    
+    @validator('level')
+    def validate_level(cls, v):
+        sanitized = sanitize_integer(v, min_value=1, max_value=100)
+        if sanitized is None:
+            raise ValueError('Nivel inválido')
+        return sanitized
 
 
 @router.put("/{user_id}/level")

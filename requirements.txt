@@ -5,7 +5,10 @@ python-dotenv==1.0.0
 # Database
 SQLAlchemy==2.0.23
 alembic==1.13.1
-psycopg2-binary==2.9.9
+mysqlclient==2.2.1
+
+# Input Sanitization & Validation
+bleach==6.1.0
 
 # Web Panel
 fastapi==0.109.0

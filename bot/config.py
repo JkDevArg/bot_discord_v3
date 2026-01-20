@@ -27,8 +27,8 @@ MAX_POINTS_PER_HOUR: int = int(os.getenv("MAX_POINTS_PER_HOUR", "100"))
 INACTIVITY_DAYS: int = int(os.getenv("INACTIVITY_DAYS", "60"))
 INACTIVITY_PENALTY: float = float(os.getenv("INACTIVITY_PENALTY", "0.25"))
 
-# Database Configuration
-DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///data/bot.db")
+# Database Configuration (MySQL only)
+DATABASE_URL: str = os.getenv("DATABASE_URL", "mysql://botuser:botpassword@db:3306/botdiscord")
 
 # Web Panel Configuration
 WEB_SECRET_KEY: str = os.getenv("WEB_SECRET_KEY", "change-me-in-production")
