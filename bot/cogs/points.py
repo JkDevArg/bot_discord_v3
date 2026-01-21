@@ -30,6 +30,8 @@ class Points(commands.Cog):
         
         db = SessionLocal()
         try:
+            bot_logger.info(f"Procesando mensaje de {message.author.name} en canal {message.channel.id}")
+            
             # Obtener o crear usuario (con avatar)
             avatar_url = message.author.display_avatar.url if message.author.display_avatar else None
             
@@ -41,10 +43,15 @@ class Points(commands.Cog):
                 avatar_url=avatar_url
             )
             
+            bot_logger.info(f"Usuario obtenido/creado: {user.username} (ID: {user.id})")
+            
             # Intentar otorgar puntos
             success, points, msg = PointsService.award_points(
                 db, user, message.channel.id
             )
+            
+            if not success:
+                bot_logger.warning(f"No se otorgaron puntos a {user.username}: {msg}")
             
             if success:
                 # Otorgar experiencia también
@@ -225,7 +232,7 @@ class Points(commands.Cog):
         """Mostrar ayuda"""
         embed = discord.Embed(
             title="📖 Comandos del Bot",
-            description="Lista de comandos disponibles",
+            description="Lista completa de comandos disponibles",
             color=discord.Color.purple()
         )
         
@@ -234,13 +241,35 @@ class Points(commands.Cog):
             value=(
                 "`/points` - Ver tus puntos\n"
                 "`/points @usuario` - Ver puntos de otro usuario\n"
-                "`/leaderboard` - Ver top de usuarios"
+                "`/leaderboard [límite]` - Ver top de usuarios por puntos"
             ),
             inline=False
         )
         
         embed.add_field(
-            name="🎭 Roles",
+            name="⭐ Niveles y Experiencia",
+            value=(
+                "`/level` - Ver tu nivel y EXP\n"
+                "`/level @usuario` - Ver nivel de otro usuario\n"
+                "`/rank [límite]` - Ver ranking por niveles\n"
+                "`/levels` - Info sobre el sistema de niveles"
+            ),
+            inline=False
+        )
+        
+        embed.add_field(
+            name="� Recompensas Diarias",
+            value=(
+                "`/daily` - Reclamar recompensa diaria\n"
+                "`/streak` - Ver tu racha actual\n"
+                "`/daily-stats` - Ver estadísticas de daily rewards\n"
+                "`/top-streaks` - Ver mejores rachas del servidor"
+            ),
+            inline=False
+        )
+        
+        embed.add_field(
+            name="�🎭 Roles",
             value=(
                 "`/roles` - Ver roles disponibles\n"
                 "`/myroles` - Ver tus roles actuales"
@@ -270,12 +299,16 @@ class Points(commands.Cog):
         embed.add_field(
             name="ℹ️ Información",
             value=(
-                "Ganas puntos por enviar mensajes (con cooldown de 60s)\n"
-                "Los roles se asignan automáticamente al alcanzar puntos\n"
-                "Puedes comprar items especiales en la tienda"
+                "• Ganas **puntos** y **EXP** por enviar mensajes\n"
+                "• Cooldown configurable entre mensajes\n"
+                "• Rachas de daily rewards con bonos especiales\n"
+                "• Roles automáticos al alcanzar puntos\n"
+                "• Sistema de niveles con recompensas cada 10 niveles"
             ),
             inline=False
         )
+        
+        embed.set_footer(text="💡 Usa /help para ver esta lista en cualquier momento")
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
 

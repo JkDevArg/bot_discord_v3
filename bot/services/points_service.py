@@ -126,23 +126,51 @@ class PointsService:
             from bot.database.channel_config import ChannelConfig
             import json
             
+            bot_logger.debug(f"Verificando canal {channel_id} (tipo: {type(channel_id).__name__}) para puntos")
+            
             config = db.query(ChannelConfig).filter(
                 ChannelConfig.config_type == 'points_channels',
                 ChannelConfig.is_enabled == True
             ).first()
             
+            bot_logger.debug(f"Config encontrado: {config is not None}")
+            if config:
+                bot_logger.debug(f"channel_ids raw: {repr(config.channel_ids)}")
+            
             if config and config.channel_ids:
                 try:
                     allowed_channels = json.loads(config.channel_ids)
-                    # Convertir a strings para comparar
-                    allowed_channels_str = [str(ch) for ch in allowed_channels]
-                    if str(channel_id) not in allowed_channels_str:
+                    bot_logger.debug(f"Canales configurados (parseados): {allowed_channels} (tipo: {type(allowed_channels).__name__})")
+                    
+                    # Normalizar TODOS los IDs a strings para comparación consistente
+                    # Los IDs pueden venir como strings o integers desde la DB
+                    allowed_channels_str = [str(ch).strip() for ch in allowed_channels]
+                    channel_id_str = str(channel_id).strip()
+                    
+                    bot_logger.debug(f"Canal actual normalizado: '{channel_id_str}'")
+                    bot_logger.debug(f"Canales permitidos normalizados: {allowed_channels_str}")
+                    
+                    if channel_id_str not in allowed_channels_str:
+                        bot_logger.warning(
+                            f"❌ Canal {channel_id} NO está en la lista de canales permitidos.\n"
+                            f"   Canal buscado: '{channel_id_str}'\n"
+                            f"   Canales permitidos: {allowed_channels_str}"
+                        )
                         return False, 0, "Canal no configurado para puntos"
-                except:
+                    
+                    bot_logger.info(f"✓ Canal {channel_id} verificado correctamente - OTORGANDO PUNTOS")
+                except Exception as e:
                     # Si hay error parseando, no otorgar puntos
+                    bot_logger.error(f"❌ Error parseando configuración de canales: {e}", exc_info=True)
                     return False, 0, "Error en configuración de canales"
             else:
                 # Si no hay canales configurados, no otorgar puntos
+                bot_logger.warning(
+                    f"❌ No hay canales configurados en la base de datos.\n"
+                    f"   Config existe: {config is not None}\n"
+                    f"   channel_ids: {config.channel_ids if config else 'N/A'}\n"
+                    f"   Configura los canales desde el panel web (/settings)"
+                )
                 return False, 0, "No hay canales configurados"
         
         # Verificar si puede ganar puntos
