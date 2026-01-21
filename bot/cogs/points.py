@@ -52,54 +52,66 @@ class Points(commands.Cog):
             
             if not success:
                 bot_logger.warning(f"No se otorgaron puntos a {user.username}: {msg}")
+            else:
+                bot_logger.info(f"✅ Puntos otorgados exitosamente a {user.username}")
             
             if success:
                 # Otorgar experiencia también
-                from bot.services.level_service import LevelService
-                _, exp_gained, leveled_up, new_level = LevelService.award_exp(db, user)
-                
-                # Si subió de nivel
-                if leveled_up:
-                    old_level = new_level - 1
+                try:
+                    from bot.services.level_service import LevelService
+                    bot_logger.debug(f"Otorgando experiencia a {user.username}...")
+                    _, exp_gained, leveled_up, new_level = LevelService.award_exp(db, user)
+                    bot_logger.debug(f"Experiencia otorgada: +{exp_gained} EXP, leveled_up={leveled_up}")
                     
-                    # Obtener recompensas
-                    rewards = LevelService.get_level_rewards(new_level)
-                    
-                    # Calcular bonificación de puntos
-                    bonus_points = rewards['points']
-                    
-                    # Anunciar level-up usando el cog
-                    try:
-                        from bot.cogs.announcements import AnnouncementsCog
-                        import asyncio
+                    # Si subió de nivel
+                    if leveled_up:
+                        old_level = new_level - 1
                         
-                        # Enviar anuncio
-                        asyncio.create_task(
-                            AnnouncementsCog.announce_level_up_exp(
-                                self.bot,
-                                message.guild,
-                                message.author,
-                                new_level,
-                                rewards
+                        # Obtener recompensas
+                        rewards = LevelService.get_level_rewards(new_level)
+                        
+                        # Calcular bonificación de puntos
+                        bonus_points = rewards['points']
+                        
+                        # Anunciar level-up usando el cog
+                        try:
+                            from bot.cogs.announcements import AnnouncementsCog
+                            import asyncio
+                            
+                            # Enviar anuncio
+                            asyncio.create_task(
+                                AnnouncementsCog.announce_level_up_exp(
+                                    self.bot,
+                                    message.guild,
+                                    message.author,
+                                    new_level,
+                                    rewards
+                                )
                             )
-                        )
-                    except Exception as e:
-                        bot_logger.error(f"Error enviando anuncio de nivel: {e}")
+                        except Exception as e:
+                            bot_logger.error(f"Error enviando anuncio de nivel: {e}")
+                except Exception as e:
+                    bot_logger.error(f"❌ Error otorgando experiencia: {e}", exc_info=True)
+                    # No retornar, continuar con la asignación de roles
                 
                 # Verificar y asignar roles automáticos
-                newly_assigned = RoleService.check_and_assign_auto_roles(
-                    db, user, message.guild
-                )
-                
-                # Asignar roles en Discord
-                for role in newly_assigned:
-                    discord_role = message.guild.get_role(role.discord_role_id)
-                    if discord_role:
-                        try:
-                            await message.author.add_roles(discord_role)
-                            bot_logger.info(f"Rol {role.name} asignado a {message.author.name}")
-                        except Exception as e:
-                            bot_logger.error(f"Error asignando rol: {e}")
+                try:
+                    bot_logger.debug(f"Verificando roles automáticos para {user.username}...")
+                    newly_assigned = RoleService.check_and_assign_auto_roles(
+                        db, user, message.guild
+                    )
+                    
+                    # Asignar roles en Discord
+                    for role in newly_assigned:
+                        discord_role = message.guild.get_role(role.discord_role_id)
+                        if discord_role:
+                            try:
+                                await message.author.add_roles(discord_role)
+                                bot_logger.info(f"Rol {role.name} asignado a {message.author.name}")
+                            except Exception as e:
+                                bot_logger.error(f"Error asignando rol: {e}")
+                except Exception as e:
+                    bot_logger.error(f"❌ Error verificando/asignando roles: {e}", exc_info=True)
         
         finally:
             db.close()

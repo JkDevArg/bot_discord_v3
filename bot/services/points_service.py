@@ -77,6 +77,8 @@ class PointsService:
         
         now = datetime.utcnow()
         
+        bot_logger.debug(f"Verificando si {user.username} puede ganar puntos...")
+        
         # Verificar cooldown (último mensaje)
         last_activity = db.query(ActivityLog).filter(
             ActivityLog.user_id == user.id,
@@ -86,9 +88,13 @@ class PointsService:
         if last_activity:
             time_since_last = (now - last_activity.created_at).total_seconds()
             cooldown = bot_config.level_cooldown_seconds
+            bot_logger.debug(f"Última actividad: {last_activity.created_at}, hace {time_since_last:.1f}s, cooldown: {cooldown}s")
             if time_since_last < cooldown:
                 remaining = int(cooldown - time_since_last)
+                bot_logger.warning(f"❌ Cooldown activo para {user.username}. Espera {remaining}s")
                 return False, f"Cooldown activo. Espera {remaining}s"
+        else:
+            bot_logger.debug(f"No hay actividad previa para {user.username}")
         
         # Verificar límite por hora
         one_hour_ago = now - timedelta(hours=1)
@@ -97,9 +103,13 @@ class PointsService:
             ActivityLog.created_at >= one_hour_ago
         ).scalar() or 0
         
+        bot_logger.debug(f"Puntos en la última hora: {points_last_hour}/{MAX_POINTS_PER_HOUR}")
+        
         if points_last_hour >= MAX_POINTS_PER_HOUR:
+            bot_logger.warning(f"❌ Límite de puntos por hora alcanzado para {user.username}")
             return False, f"Límite de {MAX_POINTS_PER_HOUR} puntos por hora alcanzado"
         
+        bot_logger.info(f"✓ {user.username} puede ganar puntos (cooldown OK, límite OK)")
         return True, ""
     
     @staticmethod
@@ -176,11 +186,16 @@ class PointsService:
         # Verificar si puede ganar puntos
         can_earn, reason = PointsService.can_earn_points(db, user)
         if not can_earn:
+            bot_logger.warning(f"❌ No puede ganar puntos: {reason}")
             return False, 0, reason
+        
+        bot_logger.debug(f"Procediendo a calcular y otorgar puntos...")
         
         # Cargar configuración desde DB
         from bot.utils.config_helper import ConfigHelper
         bot_config = ConfigHelper.get_bot_config(db)
+        
+        bot_logger.debug(f"Configuración cargada: points_per_message={bot_config.level_points_per_message}")
         
         # Calcular puntos (con variación aleatoria)
         if points_override is not None:
@@ -194,11 +209,15 @@ class PointsService:
                 base_points + variation
             )
         
+        bot_logger.debug(f"Puntos calculados: {points}")
+        
         # Actualizar usuario
         user.points += points
         user.total_points_earned += points
         user.total_messages += 1
         user.last_activity = datetime.utcnow()
+        
+        bot_logger.debug(f"Usuario actualizado: points={user.points}, total_earned={user.total_points_earned}, messages={user.total_messages}")
         
         # Registrar actividad
         activity = ActivityLog(
@@ -208,9 +227,18 @@ class PointsService:
             points_awarded=points
         )
         db.add(activity)
-        db.commit()
         
-        bot_logger.info(f"Puntos otorgados: {user.username} +{points} pts (total: {user.points})")
+        bot_logger.debug(f"ActivityLog creado, haciendo commit...")
+        
+        try:
+            db.commit()
+            bot_logger.debug(f"Commit exitoso")
+        except Exception as e:
+            bot_logger.error(f"❌ Error en commit: {e}", exc_info=True)
+            db.rollback()
+            return False, 0, f"Error guardando puntos: {e}"
+        
+        bot_logger.info(f"✅ Puntos otorgados: {user.username} +{points} pts (total: {user.points})")
         return True, points, f"¡Ganaste {points} puntos!"
     
     @staticmethod
