@@ -37,13 +37,18 @@ class DailyRewardsCog(commands.Cog):
             
             now = datetime.utcnow()
             
+            # Cargar configuración para el cooldown
+            from bot.utils.config_helper import ConfigHelper
+            bot_config = ConfigHelper.get_bot_config(db)
+            cooldown_hours = bot_config.daily_cooldown_hours
+            
             if daily_reward:
                 # Verificar si ya reclamó hoy
                 time_since_last = now - daily_reward.last_claim
                 
-                if time_since_last < timedelta(hours=20):
+                if time_since_last < timedelta(hours=cooldown_hours):
                     # Todavía no puede reclamar
-                    hours_left = 20 - (time_since_last.total_seconds() / 3600)
+                    hours_left = cooldown_hours - (time_since_last.total_seconds() / 3600)
                     embed = discord.Embed(
                         title="⏰ Recompensa Diaria",
                         description=f"Ya reclamaste tu recompensa hoy.\nVuelve en **{hours_left:.1f} horas**.",
@@ -77,22 +82,38 @@ class DailyRewardsCog(commands.Cog):
                 )
                 db.add(daily_reward)
             
-            # Calcular recompensa
-            base_reward = 50
-            streak_bonus = min(daily_reward.streak_days * 10, 200)  # Máx 200 de bonus
+            # Cargar configuración desde la base de datos
+            from bot.utils.config_helper import ConfigHelper
+            bot_config = ConfigHelper.get_bot_config(db)
+            
+            # Calcular recompensa usando configuración
+            base_reward = bot_config.daily_base_reward
+            
+            # Calcular bonus por racha: streak_days * bonus_per_day, máximo max_streak_bonus
+            streak_bonus = min(
+                daily_reward.streak_days * bot_config.daily_streak_bonus_per_day,
+                bot_config.daily_max_streak_bonus
+            )
+            
             total_reward = base_reward + streak_bonus
             
             # Bonos especiales
             special_bonus = 0
             special_msg = ""
             if daily_reward.streak_days == 7:
-                special_bonus = 100
-                special_msg = "\n🎉 **¡Bonus semanal!** +100 puntos"
+                special_bonus = bot_config.daily_week_bonus
+                special_msg = f"\n🎉 **¡Bonus semanal!** +{special_bonus} puntos"
             elif daily_reward.streak_days == 30:
-                special_bonus = 500
-                special_msg = "\n🏆 **¡Bonus mensual!** +500 puntos"
+                special_bonus = bot_config.daily_month_bonus
+                special_msg = f"\n🏆 **¡Bonus mensual!** +{special_bonus} puntos"
             
             total_reward += special_bonus
+            
+            bot_logger.info(
+                f"Daily reward calculation for {interaction.user.name}: "
+                f"base={base_reward}, streak_bonus={streak_bonus} (streak={daily_reward.streak_days}), "
+                f"special={special_bonus}, total={total_reward}"
+            )
             
             # Otorgar puntos
             user.points += total_reward
